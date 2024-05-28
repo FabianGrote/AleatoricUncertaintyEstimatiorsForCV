@@ -1,0 +1,16 @@
+[submodule "src/models/coco/InternImage"]
+	path = src/models/coco/InternImage
+	url = https://github.com/OpenGVLab/InternImage.git
+	branch = master
+[submodule "src/models/coco/Co-DETR"]
+	path = src/models/coco/Co-DETR
+	url = https://github.com/Sense-X/Co-DETR.git
+	branch = master
+[submodule "src/models/cholec80/TeCNO"]
+	path = src/models/cholec80/TeCNO
+	url = https://github.com/tobiascz/TeCNO.git
+	branch = master
+[submodule "src/models/cholec80/SelfSupSurg"]
+	path = src/models/cholec80/SelfSupSurg
+	url = https://github.com/CAMMA-public/SelfSupSurg.git
+	branch = main
