@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torch.distributions.multivariate_normal import MultivariateNormal
 import numpy as np
 from torchvision.models import resnet50
 
@@ -78,3 +79,17 @@ class Net(nn.Module):
 
     # UC uses ?, kyle uses logits_variance and softmax
     return {"softmax_output": softmax_output, "logits_variance": logits_variance, "sigma2_uc_github_approach": sigma2_uc_github_approach}
+  
+
+
+def predict(data, net, device, T=1000, class_count=10):
+  mvn = MultivariateNormal(torch.zeros(class_count), torch.eye(class_count))
+  output = net(data)
+  mu = output["logits_variance"][:, :-1]
+  log_sigma2 = output["sigma2_uc_github_approach"]
+  y_hat = torch.zeros_like(mu)
+    
+  for t in range(T):
+    y_hat += F.softmax(mu + torch.exp(0.5*log_sigma2)*mvn.sample((len(mu),)).to(device), dim=1).detach() / T
+
+  return y_hat / T
