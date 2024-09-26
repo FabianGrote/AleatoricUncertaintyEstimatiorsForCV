@@ -2,7 +2,6 @@
 #SBATCH --job-name=grotefabian_BA_run      # Job name
 #SBATCH --time=5:00:00
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1,
 
 #SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=st155860@stud.uni-stuttgart.de     # Where to send mail	
