@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
-#SBATCH --time=29:59:00
+#SBATCH --time=47:59:00
 #SBATCH --nodes=1
-#SBATCH --ntasks=2
-#SBATCH --ntasks-per-node=4
-#SBATCH --gres=gpu:4
+#SBATCH --ntasks=8
+#SBATCH --ntasks-per-node=8
+#SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=8
 
 #SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
