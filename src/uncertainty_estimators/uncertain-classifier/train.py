@@ -17,7 +17,7 @@ print("Working dir:", os.getcwd())
 
 train_loader = torch.utils.data.DataLoader(
   datasets.Imagenette( # ImageNet(
-    root = "/datasets/Imagenette-download", # ImageNet2012",
+    root = "/mnt/HDD1/datasets/Imagenet2012", # ImageNet2012",
     split = "train",
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -26,12 +26,12 @@ train_loader = torch.utils.data.DataLoader(
       transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
   ),
-  batch_size=256, shuffle=True
+  batch_size=512, shuffle=True
 )
 
 test_loader = torch.utils.data.DataLoader(
   datasets.Imagenette( # ImageNet(
-    root = "/datasets/Imagenette-download", # ImageNet2012",
+    root = "/mnt/HDD1/datasets/Imagenet2012", # ImageNet2012",
     split = "val", # "train"
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -40,7 +40,7 @@ test_loader = torch.utils.data.DataLoader(
       transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
   ),
-  batch_size=256, shuffle=True
+  batch_size=512, shuffle=True
 )
 
 # train_loader = torch.utils.data.DataLoader(
@@ -76,7 +76,7 @@ net = aleatoric_uncertainty_estimator_model.Net(
 # UC uses 2 times num classes as linear output in loss, kyle uses logits_variance and softmax in loss
 criterion_dict = {
   # Loss used by "Uncertainty classifier"-GitHub Repo
-  "criterion_kendall_and_gal": loss_functions.Loss(),
+  "criterion_kendall_and_gal": loss_functions.Loss(device=device),
 
   # For logits_variance network output in Kyles version
   "criterion_kyles_variance": loss_functions.BayesianCategoricalCrossEntropy_KylesVersion(),
@@ -96,23 +96,23 @@ trainingEpoch_loss = []
 validationEpoch_loss = []
 validationEpoch_Softmaxloss = []
 criterion_to_use = "kendall and gal" # or "kyles version"
-for epoch in range(40):
+for epoch in range(500):
   train_losses = train_and_test_routines.train(train_loader, net, criterion_to_use, criterion_dict, optimizer, scheduler, device)  
-  print ('Train loss = %s' % (sum(train_losses) / len(train_losses)) )
+  print('Epoch: ' + str(epoch) + ' Train loss = %s' % (sum(train_losses) / len(train_losses)) )
   trainingEpoch_loss.append(train_losses)
 
   if criterion_to_use == "kendall and gal":
-    score, validationEpoch_loss = train_and_test_routines.test(test_loader, predict, net, criterion_to_use, criterion_dict, device)
-    print ('Testing: Accuracy = %.2f%%, Loss %.4f' % (score*100, validationEpoch_loss))
-    validationEpoch_loss.append(validationEpoch_loss)
+    score, validation_loss = train_and_test_routines.test(test_loader, predict, net, criterion_to_use, criterion_dict, device)
+    print('Epoch: ' + str(epoch) + ' Testing: Accuracy = %.2f%%, Loss %.4f' % (score*100, validation_loss))
+    validationEpoch_loss.append(validation_loss)
   # TODO
   # elif criterion_to_use == "kyles version":
   #   score, validationEpoch_loss = train_and_test_routines.test(test_loader, predict, net, criterion_to_use, criterion_dict, device)
   #   print ('Testing: Accuracy = %.2f%%, Loss %.4f' % (score*100, validationEpoch_loss))
   #   validationEpoch_loss.append(validationEpoch_loss)
   
-  if epoch%5 == 0 or epoch > 35:
-    torch.save(net, "new_checkpoints/UncertaintyEstimator_" + criterion_to_use + "_Epoch_" + str(epoch) + "_test_loss_" + str(validationEpoch_loss) + "_test_accuracy_" + str(score) + ".pt")
+  if epoch%10 == 0:
+    torch.save(net, "new_checkpoints/UncertaintyEstimator_" + criterion_to_use + "_Epoch_" + str(epoch) + "_test_loss_" + str(validationEpoch_loss[-1]) + "_test_accuracy_" + str(score) + ".pt")
 
 
 plt.plot(trainingEpoch_loss, label='train_loss')
@@ -121,4 +121,4 @@ plt.legend()
 plt.show
 
 
-torch.save(net, '%s.pt' % "aleatoric")
+torch.save(net, '%s.pt' % "aleatoric_final")

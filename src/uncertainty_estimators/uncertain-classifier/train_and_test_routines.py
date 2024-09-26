@@ -1,6 +1,7 @@
 import torch
 from tqdm import tqdm
 from torch.distributions.multivariate_normal import MultivariateNormal
+import torch.nn.functional as F
 
 def train(train_loader, net, criterion_to_use, criterion_dict, optimizer, scheduler, device):
   train_losses = []
@@ -33,7 +34,7 @@ def test(test_loader, predict, net, criterion_to_use, criterion_dict, device):
   for data, target in test_loader:
     data = data.to(device)
     target = target.to(device)
-    output = predict(data, net)
+    output = predict(data, net, device)
     
     predictions = torch.argmax(output.data, 1)
     scores.append((predictions == target).float().mean().detach().item())
@@ -55,9 +56,7 @@ def test(test_loader, predict, net, criterion_to_use, criterion_dict, device):
   return sum(scores)/len(test_loader), sum(losses)/len(test_loader)
 
 
-
-
-def predict(data, net, T=100, class_count=10):
+def predict(data, net, device, T=1000, class_count=10):
   mvn = MultivariateNormal(torch.zeros(class_count), torch.eye(class_count))
   output = net(data)
   mu = output["logits_variance"][:, :-1]
@@ -65,6 +64,6 @@ def predict(data, net, T=100, class_count=10):
   y_hat = torch.zeros_like(mu)
     
   for t in range(T):
-    y_hat += F.softmax(mu + torch.exp(0.5*log_sigma2)*mvn.sample((len(mu),)), dim=1).detach() / T
+    y_hat += F.softmax(mu + torch.exp(0.5*log_sigma2)*mvn.sample((len(mu),)).to(device), dim=1).detach() / T
 
   return y_hat / T

@@ -5,11 +5,12 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 import numpy as np
 
 class Loss(torch.nn.Module):
-  def __init__(self, num_classes=10, T=1000):
+  def __init__(self, device, num_classes=10, T=1000):
     super(Loss,self).__init__()
     self.mvn = MultivariateNormal(torch.zeros(num_classes), torch.eye(num_classes))
     self.T = T
     self.class_count = num_classes
+    self.device = device
 
   def forward(self, output, y):
     # Equation 6 in the paper
@@ -19,7 +20,7 @@ class Loss(torch.nn.Module):
     
     # T is the number of sampled masked model weights
     for t in range(self.T):
-      epsilon = self.mvn.sample((len(mu),))
+      epsilon = self.mvn.sample((len(mu),)).to(self.device)
       # log_softmax allows to retrieve log-probabilities
       # upper part of equation 12 in paper. But wonder where 0.5 comes from
       numerator = F.log_softmax(mu + torch.exp(0.5*log_sigma2)*epsilon, dim=1)
