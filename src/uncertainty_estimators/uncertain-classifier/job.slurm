@@ -19,7 +19,7 @@
 
 module load devel/cuda/12.4
 module load anaconda3/2023.9
-conda activate bolts-env
+conda activate fabis_pytorch_env
 
 echo "Running script on 4 GPUs"
 
