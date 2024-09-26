@@ -17,22 +17,10 @@ import aleatoric_uncertainty_estimator_model, trainer, loss_functions
 import os
 print("Working dir:", os.getcwd())
 
-# def ddp_setup(rank: int, world_size: int):
-#   """
-#     Args:
-#     rank: Unique identifier of each process
-#     world_size: Total number of processes
-#   """
-#   os.environ["MASTER_ADDR"] = "localhost"
-#   os.environ["MASTER_PORT"] = "12355"
-#   torch.cuda.set_device(rank)
-#   # backend for distributed stuff
-#   init_process_group(backend="nccl", rank=rank, world_size=world_size)
-
 
 train_dataset = datasets.ImageNet( # Imagenette
-    root = "/mnt/HDD1/datasets/ImageNet2012", # nette-download", #Net2012", # ImageNet2012",
-    split = "val", # "train",
+    root = "/datasets/ImageNet2012", # nette-download", #Net2012", # ImageNet2012",
+    split = "train", # "train",
     transform = transforms.Compose([
       transforms.Resize(256),
       transforms.CenterCrop(224),
@@ -42,7 +30,7 @@ train_dataset = datasets.ImageNet( # Imagenette
   )
 
 val_dataset = datasets.ImageNet( # Imagenette
-    root = "/mnt/HDD1/datasets/ImageNet2012", #nette-download", # Net2012",
+    root = "/datasets/ImageNet2012", #nette-download", # Net2012", mnt/HDD1
     split = "val",
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -99,12 +87,12 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
 )
 trainer = L.Trainer(
   check_val_every_n_epoch=5,
-  max_epochs=500, 
-  devices=1,
+  max_epochs=200, 
+  devices=8,
   num_nodes=1,
   accelerator="gpu",
   enable_checkpointing=True,
-  log_every_n_steps = 100,
+  log_every_n_steps = 1000,
   limit_train_batches=1.0,
   limit_val_batches=1.0,
   logger=logger,
