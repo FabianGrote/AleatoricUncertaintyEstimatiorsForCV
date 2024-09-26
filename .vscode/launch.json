@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Kyles Kendall and Gal classification",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/uncertainty_estimators/bayesian-neural-network-blogpost/bin/train.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "purpose":["debug-in-terminal"]
+        },
+        {
+            "name": "UE train Kendall and Gal regression",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/train.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "purpose":["debug-in-terminal"],
+            "args": [
+                "aleatoric"
+            ]
+        },
+        {
+            "name": "UE vis Kendall and Gal regression",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/vis.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "purpose":["debug-in-terminal"],
+            "args": [
+                "aleatoric"
+            ]
+        }
+    ]
+}

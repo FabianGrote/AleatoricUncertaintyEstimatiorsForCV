@@ -20,7 +20,7 @@
         }
     },
     "mounts": [
-        "source=/mnt/hdd1/datasets,target=/datasets,type=bind,consistency=cached",
+        "source=/mnt/HDD1/datasets,target=/datasets,type=bind,consistency=cached",
         "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
       ]
 }

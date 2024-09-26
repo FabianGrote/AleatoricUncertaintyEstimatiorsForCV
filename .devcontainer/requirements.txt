@@ -6,3 +6,10 @@ jupyter
 torch
 torchvision
 torchmetrics
+tqdm
+scipy
+matplotlib
+keras
+tensorflow
+boto3
+opencv-contrib-python
