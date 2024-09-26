@@ -13,7 +13,7 @@
 #SBATCH --output=grotefabian_BA_output_%j.log
 #SBATCH --error=grotefabian_BA_error_%j.log
 
-#SBATCH --partition=gpu_4
+#SBATCH --partition=gpu_4_h100
 
 module load devel/cuda/12.4
 module load anaconda3/2023.9
