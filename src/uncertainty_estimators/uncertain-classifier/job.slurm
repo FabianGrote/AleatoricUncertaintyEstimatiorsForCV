@@ -2,9 +2,9 @@
 #SBATCH --job-name=grotefabian_BA_run      # Job name
 #SBATCH --time=47:59:00
 #SBATCH --nodes=1
-#SBATCH --ntasks=8
-#SBATCH --ntasks-per-node=8
-#SBATCH --gres=gpu:8
+#SBATCH --ntasks=4
+#SBATCH --ntasks-per-node=4
+#SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=8
 
 #SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
@@ -13,13 +13,13 @@
 #SBATCH --output=grotefabian_BA_output_%j.log
 #SBATCH --error=grotefabian_BA_error_%j.log
 
-#SBATCH --partition=gpu_8
+#SBATCH --partition=gpu_4
 
 module load devel/cuda/12.4
 module load anaconda3/2023.9
 conda activate fabis_pytorch_env
 
-echo "Running script on 8 GPUs"
+echo "Running script on 4 GPUs"
 
 srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py
 
