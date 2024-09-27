@@ -9,7 +9,7 @@
 #SBATCH --output=grotefabian_BA_output_%j.log
 #SBATCH --error=grotefabian_BA_error_%j.log
 
-#SBATCH --partition=dev_single
+#SBATCH --partition=single
 
 module purge
 module load devel/cuda/12.4
