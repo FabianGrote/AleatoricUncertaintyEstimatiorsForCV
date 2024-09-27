@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
-#SBATCH --time=00:05:00
+#SBATCH --time=10:00:00
 #SBATCH --nodes=1
 
 #SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
