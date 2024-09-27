@@ -15,12 +15,12 @@
 
 #SBATCH --partition=gpu_4
 
+module purge
 module load devel/cuda/12.4
-module load anaconda3/2023.9
-conda activate fabis_pytorch_env
 
-echo "Running script on 4 GPUs"
+# activate conda environment
+source activate fabis_pytorch_env
+
+echo "Running script on CPUs"
 
 srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py
-
-date

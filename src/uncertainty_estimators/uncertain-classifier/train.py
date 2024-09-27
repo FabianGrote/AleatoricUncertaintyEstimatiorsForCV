@@ -86,15 +86,15 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   predict = predict
 )
 trainer = L.Trainer(
-  check_val_every_n_epoch=5,
+  check_val_every_n_epoch=1,
   max_epochs=200, 
   # devices=4,
   num_nodes=1,
   accelerator="cpu",
   enable_checkpointing=True,
   log_every_n_steps = 1000,
-  limit_train_batches=1.0,
-  limit_val_batches=1.0,
+  limit_train_batches=0.000001, # 1.0,
+  limit_val_batches=0.0001, # 1.0,
   logger=logger,
   callbacks=[lr_monitor],
   )
