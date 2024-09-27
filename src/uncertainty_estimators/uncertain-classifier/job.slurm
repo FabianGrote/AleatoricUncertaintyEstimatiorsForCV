@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
-#SBATCH --time= 47:59:00
+#SBATCH --time=47:59:00
 #SBATCH --nodes=4
 #SBATCH --ntasks=32
 #SBATCH --ntasks-per-node=8
