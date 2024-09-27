@@ -19,7 +19,8 @@ print("Working dir:", os.getcwd())
 
 
 train_dataset = datasets.ImageNet( # Imagenette
-    root = "/datasets/ImageNet2012", # nette-download", #Net2012", # ImageNet2012",
+    root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
+    # root = "/datasets/ImageNet2012",   # local workstation
     split = "train", # "train",
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -30,7 +31,8 @@ train_dataset = datasets.ImageNet( # Imagenette
   )
 
 val_dataset = datasets.ImageNet( # Imagenette
-    root = "/datasets/ImageNet2012", #nette-download", # Net2012", mnt/HDD1
+    root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", # Net2012", mnt/HDD1
+    # root = "/datasets/ImageNet2012",   # local workstation
     split = "val",
     transform = transforms.Compose([
       transforms.Resize(256),
