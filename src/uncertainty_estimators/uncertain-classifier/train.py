@@ -6,22 +6,27 @@ from torchvision import transforms, datasets
 import lightning as L
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.callbacks import LearningRateMonitor
+import argparse
+import time
+
 
 import aleatoric_uncertainty_estimator_model, trainer, loss_functions
-
-# import torch.multiprocessing as mp
-# from torch.utils.data.distributed import DistributedSampler
-# from torch.nn.parallel import DistributedDataParallel as DDP
-# from torch.distributed import init_process_group, destroy_process_group
 
 import os
 print("Working dir:", os.getcwd())
 
+# local execution: python3 train.py --accelerator='gpu' --devices=1 --num_nodes=1 --max_epochs=100
+parser = argparse.ArgumentParser()
+parser.add_argument("--accelerator", default="cpu", help="cpu or gpu", type=str)
+parser.add_argument("--devices", default=1, help="Number of GPU nodes for distributed training.", type=int)
+parser.add_argument("--num_nodes", default=1, help="Number of GPU nodes for distributed training.", type=int)
+parser.add_argument("--max_epochs", default=100, help="Stop training once this number of epochs is reached.", type=int)
+args = parser.parse_args()
 
 train_dataset = datasets.ImageNet( # Imagenette
     root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
-    # root = "/datasets/ImageNet2012",   # local workstation
-    split = "train", # "train",
+    # root = "/mnt/HDD1/datasets/ImageNet2012",   # local workstation
+    split = "train",
     transform = transforms.Compose([
       transforms.Resize(256),
       transforms.CenterCrop(224),
@@ -32,7 +37,7 @@ train_dataset = datasets.ImageNet( # Imagenette
 
 val_dataset = datasets.ImageNet( # Imagenette
     root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", # Net2012", mnt/HDD1
-    # root = "/datasets/ImageNet2012",   # local workstation
+    # root = "/mnt/HDD1/datasets/ImageNet2012",   # local workstation
     split = "val",
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -58,11 +63,13 @@ net = aleatoric_uncertainty_estimator_model.Net(
   encoder = "resnet50"
 )
 
+time = time.strftime("%Y%m%d_%H-%M")
 # default logger used by trainer (if tensorboard is installed)
 logger = TensorBoardLogger(
   save_dir=os.getcwd(),
-  # version=1, 
-  name="lightning_logs_gpu")
+  name="lightning_logs",
+  version="uncertainty_classifier_" + time
+)
 
 lr_monitor = LearningRateMonitor(logging_interval='step')
 
@@ -88,11 +95,11 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   predict = predict
 )
 trainer = L.Trainer(
-  check_val_every_n_epoch=1,
-  max_epochs=500, 
-  devices=8,
-  num_nodes=4,
-  accelerator="gpu",   # cpu
+  check_val_every_n_epoch=5,
+  max_epochs=args.max_epochs,
+  devices=args.devices,
+  num_nodes=args.num_nodes,
+  accelerator=args.accelerator,
   enable_checkpointing=True,
   log_every_n_steps = 1000,
   limit_train_batches=1.0,

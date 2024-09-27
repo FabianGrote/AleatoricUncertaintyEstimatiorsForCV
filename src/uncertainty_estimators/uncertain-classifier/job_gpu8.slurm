@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
-#SBATCH --time= 47:59:00
+#SBATCH --time=47:59:00
 #SBATCH --nodes=4
 #SBATCH --ntasks=32
 #SBATCH --ntasks-per-node=8
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=8
 
-#SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --mail-type=ALL                                # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=st155860@stud.uni-stuttgart.de     # Where to send mail	
 
 #SBATCH --output=grotefabian_BA_output_%j.log
@@ -23,4 +23,4 @@ source activate fabis_pytorch_env
 
 echo "Running script on 8 GPUs"
 
-srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py
+srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.pypython3 train.py --accelerator='gpu' --devices=8 --num_nodes=4 --max_epochs=500

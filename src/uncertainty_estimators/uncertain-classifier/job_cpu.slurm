@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
-#SBATCH --time=10:00:00
-#SBATCH --nodes=1
+#SBATCH --time=9:59:00
 
 #SBATCH --mail-type=ALL                 # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=st155860@stud.uni-stuttgart.de     # Where to send mail	
@@ -19,5 +18,5 @@ source activate fabis_pytorch_env
 
 echo "Running script on CPUs"
 
-srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py
+srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py python3 train.py --accelerator='cpu' --devices=1 --num_nodes=1 --max_epochs=500
 
