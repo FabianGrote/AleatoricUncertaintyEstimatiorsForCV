@@ -20,3 +20,4 @@ source activate fabis_pytorch_env
 echo "Running script on CPUs"
 
 srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py
+
