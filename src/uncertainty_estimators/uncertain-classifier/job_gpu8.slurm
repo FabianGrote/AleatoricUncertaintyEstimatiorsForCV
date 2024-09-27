@@ -5,7 +5,6 @@
 #SBATCH --ntasks=32
 #SBATCH --ntasks-per-node=8
 #SBATCH --gres=gpu:8
-#SBATCH --cpus-per-task=8
 
 #SBATCH --mail-type=ALL                                # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=st155860@stud.uni-stuttgart.de     # Where to send mail	
