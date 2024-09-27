@@ -62,7 +62,7 @@ net = aleatoric_uncertainty_estimator_model.Net(
 logger = TensorBoardLogger(
   save_dir=os.getcwd(),
   # version=1, 
-  name="lightning_logs")
+  name="lightning_logs_gpu")
 
 lr_monitor = LearningRateMonitor(logging_interval='step')
 
