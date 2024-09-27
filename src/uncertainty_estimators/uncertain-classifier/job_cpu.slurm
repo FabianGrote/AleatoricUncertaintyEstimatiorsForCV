@@ -14,7 +14,7 @@ module purge
 module load devel/cuda/12.4
 
 # activate conda environment
-source activate fabis_pytorch_env
+source activate /home/st/st_us-053030/st_st155860/miniconda3/envs/fabis_pytorch_env
 
 echo "Running script on CPUs"
 
