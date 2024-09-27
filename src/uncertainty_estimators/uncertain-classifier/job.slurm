@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=grotefabian_BA_run      # Job name
 #SBATCH --time=47:59:00
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks=16
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks-per-node=8
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=8
 
