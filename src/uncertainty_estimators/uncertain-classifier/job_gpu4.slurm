@@ -22,4 +22,4 @@ conda activate /home/st/st_us-053030/st_st155860/miniconda3/envs/fabis_pytorch_e
 
 echo "Running script on 4 GPUs"
 
-srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py python3 train.py --accelerator='gpu' --devices=4 --num_nodes=2 --max_epochs=500
+srun python ~/Code/AleatoricUncertaintyEstimatiorsForCV/src/uncertainty_estimators/uncertain-classifier/train.py --accelerator='gpu' --devices=4 --num_nodes=2 --max_epochs=500
