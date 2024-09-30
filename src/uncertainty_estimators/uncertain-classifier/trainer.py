@@ -158,7 +158,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     if prefix == "val" or self.current_epoch%25==0:
       fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
 
-      self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys())
+      self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys(), cmap="OrRd")
 
       buf = io.BytesIO()
       fig.savefig(buf, format="png", bbox_inches="tight")
