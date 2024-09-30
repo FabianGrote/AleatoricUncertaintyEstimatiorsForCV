@@ -15,18 +15,47 @@ import aleatoric_uncertainty_estimator_model, trainer, loss_functions
 import os
 print("Working dir:", os.getcwd())
 
-# local execution: python3 train.py --accelerator='gpu' --devices=1 --num_nodes=1 --max_epochs=100
+# local conda env: conda activate fabis_uncertainty_env
+# local execution: python3 train.py --accelerator='gpu' --devices=1 --num_nodes=1 --max_epochs=1000 --dataset="Imagenette"
 parser = argparse.ArgumentParser()
 parser.add_argument("--accelerator", default="cpu", help="cpu or gpu", type=str)
 parser.add_argument("--devices", default=1, help="Number of GPU nodes for distributed training.", type=int)
 parser.add_argument("--num_nodes", default=1, help="Number of GPU nodes for distributed training.", type=int)
 parser.add_argument("--max_epochs", default=100, help="Stop training once this number of epochs is reached.", type=int)
+parser.add_argument("--dataset", default="Imagenette", help="Dataset to use. Can be: Imagenette, ...", type=str)
 args = parser.parse_args()
 
-train_dataset = datasets.ImageNet( # Imagenette
-    root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
-    # root = "/mnt/HDD1/datasets/ImageNet2012",   # local workstation
-    split = "train",
+dataset = args.dataset
+
+if dataset == "Imagenette":
+  train_dataset = datasets.Imagenette(
+      # root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
+      root = "/mnt/HDD1/datasets/Imagenette",   # local workstation
+      split = "train",
+      transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+      ])
+    )
+  val_dataset = datasets.Imagenette(
+      # root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", # Net2012", mnt/HDD1
+      root = "/mnt/HDD1/datasets/Imagenette",   # local workstation
+      split = "val",
+      transform = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+      ])
+    )
+  class_labels = {'tench': 0, 'English springer': 1, 'cassette player': 2, 'chainsaw': 3, 'church': 4, 'French horn': 5, 'garbage truck': 6, 'gas pump': 7, 'golf ball': 8, 'parachute': 9}
+else:
+  train_dataset = datasets.Imagenette( # ImageNet or Imagenette
+    # root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
+    root = "/mnt/HDD1/datasets/Imagenette",   # local workstation   or: ImageNet2012
+    split = "train", #"val", or "train",
     transform = transforms.Compose([
       transforms.Resize(256),
       transforms.CenterCrop(224),
@@ -34,10 +63,9 @@ train_dataset = datasets.ImageNet( # Imagenette
       transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
   )
-
-val_dataset = datasets.ImageNet( # Imagenette
-    root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", # Net2012", mnt/HDD1
-    # root = "/mnt/HDD1/datasets/ImageNet2012",   # local workstation
+  val_dataset = datasets.Imagenette( # ImageNet or Imagenette
+    # root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", # Net2012", mnt/HDD1
+    root = "/mnt/HDD1/datasets/Imagenette",   # local workstation   or: ImageNet2012
     split = "val",
     transform = transforms.Compose([
       transforms.Resize(256),
@@ -46,6 +74,8 @@ val_dataset = datasets.ImageNet( # Imagenette
       transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
   )
+  class_labels = train_dataset.class_to_idx
+
 
 train_loader = torch.utils.data.DataLoader(
   train_dataset, batch_size=256, shuffle=False, num_workers=8 # sampler=DistributedSampler(train_dataset)
@@ -83,7 +113,7 @@ criterion_dict = {
   # For softmax network output in Kyles version
   "criterion_kyles_softmax": nn.CrossEntropyLoss(),
 }
-criterion_to_use = "kendall and gal" # or "kyles version"
+criterion_to_use = "kyles version" # "kendall and gal" or "kyles version"
 
 predict = aleatoric_uncertainty_estimator_model.predict
 
@@ -92,7 +122,9 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   net = net,
   criterion_to_use = criterion_to_use,
   criterion_dict = criterion_dict, 
-  predict = predict
+  predict = predict,
+  num_classes = num_classes,
+  class_labels = class_labels
 )
 trainer = L.Trainer(
   check_val_every_n_epoch=5,
@@ -101,7 +133,7 @@ trainer = L.Trainer(
   num_nodes=args.num_nodes,
   accelerator=args.accelerator,
   enable_checkpointing=True,
-  log_every_n_steps = 1000,
+  # log_every_n_steps = 100,
   limit_train_batches=1.0,
   limit_val_batches=1.0,
   logger=logger,
