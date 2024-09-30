@@ -50,24 +50,24 @@ class Net(nn.Module):
       raise ValueError('Unexpected encoder model ' + encoder + ".")
 
     # freeze encoder layers to prevent over fitting
-    for param in base_model.parameters():
-      param.requires_grad = False
+    # for param in base_model.parameters():
+    #   param.requires_grad = False
 
     return base_model
   
   def bayesian_model(self, x):    
     x = self.batch_norm_1(x)
-    x = nn.Dropout(p=0.5)(x)
+    #x = nn.Dropout(p=0.5)(x)
     x = self.linear_1(x)
     x = self.relu_1(x)
 
     x = self.batch_norm_2(x)
-    x = nn.Dropout(p=0.5)(x)
+    #x = nn.Dropout(p=0.5)(x)
     x = self.linear_2(x)
     x = self.relu_2(x)
     
     x = self.batch_norm_3(x)
-    x = nn.Dropout(p=0.5)(x)
+    #x = nn.Dropout(p=0.5)(x)
     logits = self.linear_3(x)
 
     variance_pre = self.linear_variance(x)

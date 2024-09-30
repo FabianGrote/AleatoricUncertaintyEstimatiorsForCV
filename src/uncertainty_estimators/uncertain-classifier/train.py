@@ -78,11 +78,11 @@ else:
 
 
 train_loader = torch.utils.data.DataLoader(
-  train_dataset, batch_size=256, shuffle=False, num_workers=8 # sampler=DistributedSampler(train_dataset)
+  train_dataset, batch_size=40, shuffle=False, num_workers=8 # sampler=DistributedSampler(train_dataset)
 )
 
 val_loader = torch.utils.data.DataLoader(
-  val_dataset, batch_size=256, shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
+  val_dataset, batch_size=40, shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
 )
 
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -91,14 +91,6 @@ net = aleatoric_uncertainty_estimator_model.Net(
   image_size = (3, 224, 224), # channels x width x height
   num_classes = num_classes, # imagenette: 10, 
   encoder = "resnet50"
-)
-
-time = time.strftime("%Y%m%d_%H-%M")
-# default logger used by trainer (if tensorboard is installed)
-logger = TensorBoardLogger(
-  save_dir=os.getcwd(),
-  name="lightning_logs",
-  version="uncertainty_classifier_" + time
 )
 
 lr_monitor = LearningRateMonitor(logging_interval='step')
@@ -113,7 +105,16 @@ criterion_dict = {
   # For softmax network output in Kyles version
   "criterion_kyles_softmax": nn.CrossEntropyLoss(),
 }
-criterion_to_use = "kyles version softmax only" # "kendall and gal" or "kyles version" or "kyles version softmax only"
+criterion_to_use = "kyles_version" # "kendall_and_gal" or "kyles_version" or "softmax_only"
+
+time = time.strftime("%Y%m%d_%H-%M")
+# default logger used by trainer (if tensorboard is installed)
+logger = TensorBoardLogger(
+  save_dir=os.getcwd(),
+  name="lightning_logs",
+  version="uncertainty_classifier_" + criterion_to_use + "_" + time
+)
+
 
 predict = aleatoric_uncertainty_estimator_model.predict
 

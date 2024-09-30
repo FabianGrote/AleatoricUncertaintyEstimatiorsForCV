@@ -46,13 +46,13 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     data, target = batch
     output = self.net(data)
       
-    if self.criterion_to_use == "kendall and gal":
+    if self.criterion_to_use == "kendall_and_gal":
       loss = self.criterion_dict["criterion_kendall_and_gal"]([output["logits_variance"][:, :-1], output["sigma2_uc_github_approach"]], target, device=self.device)
       # loss_variance = criterion_dict["criterion_kendall_and_gal_variance"](output["logits_variance"], target)
       # loss_softmax = criterion_dict["criterion_kendall_and_gal_softmax"](output["softmax_output"], target)
       # loss = 0.2 * loss_variance + 1*loss_softmax
   
-    elif self.criterion_to_use == "kyles version":
+    elif self.criterion_to_use == "kyles_version":
       loss_variance = self.criterion_dict["criterion_kyles_variance"](output["logits_variance"], target)
       loss_softmax = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
       loss = 0.2 * loss_variance + 1*loss_softmax
@@ -60,60 +60,20 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       # acc_top_5 = self.multiclass_top5_accuracy(output["softmax_output"], target)
       # ece = self.multiclass_ece(preds=output["logits_variance"][:, 0:self.num_classes], target=target)
       # confusion_matrix = self.multiclass_confusion_matrix()
-    elif self.criterion_to_use == "kyles version softmax only":
+    elif self.criterion_to_use == "softmax_only":
       loss = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
-    
-    self.log("train_loss_step_level", loss, on_step=True, on_epoch=False, prog_bar=True, logger=True)
     
     self.train_output_dict["loss"].append(loss)
     self.train_output_dict["logits"].append(output["logits_variance"][:, 0:self.num_classes])
     self.train_output_dict["softmax_pred"].append(torch.argmax(output["softmax_output"], dim=1))
     self.train_output_dict["target"].append(target) # acc_top_1": acc_top_1, "acc_top_5": acc_top_5, "ece": ece}
 
-    # return loss
     return loss
 
   # Logging to TensorBoard
   def on_train_epoch_end(self):
-    all_loss = torch.stack(self.train_output_dict["loss"])
-    all_logits=torch.vstack(self.train_output_dict["logits"])
-    all_softmax_pred=torch.hstack(self.train_output_dict["softmax_pred"])
-    all_targets=torch.hstack(self.train_output_dict["target"])
-
-    acc_top_1 = self.multiclass_top1_accuracy(preds=all_softmax_pred, target=all_targets)
-    acc_top_5 = self.multiclass_top5_accuracy(preds=all_logits, target=all_targets)
-    ece = self.multiclass_ece(preds=all_logits, target=all_targets)
-    mce = self.multiclass_mce(preds=all_logits, target=all_targets)
-    mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
-    self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
-
-    #confusion_matrix = self.multiclass_confusion_matrix(preds=all_softmax_pred, target=all_targets)
-    self.log("train_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
-    self.log("train_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("train_accuracy_top-5", acc_top_5, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("train_ece", ece, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("train_mce", mce, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("train_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-
-    fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
-
-    self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys())
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    buf.seek(0)
-    im = transforms.ToTensor()(Image.open(buf))
-
-    self.logger.experiment.add_image(
-        "train_confusion_matrix",
-        im,
-        global_step=self.current_epoch,
-    )
-
-    # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_ece", training_step_outputs.ece.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.training_step_outputs.clear()  # free memory
+    self.log_metrics(output_dict = self.train_output_dict, prefix="train")
+    self.train_output_dict.clear()  # free memory
 
   def on_validation_epoch_start(self) -> None:
     super().on_validation_epoch_start()
@@ -137,72 +97,33 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     
     output = self.net(data)
     
-    if self.criterion_to_use == "kendall and gal":
+    if self.criterion_to_use == "kendall_and_gal":
       loss = self.criterion_dict["criterion_kendall_and_gal"]([output["logits_variance"][:, :-1], output["sigma2_uc_github_approach"]], target, device=self.device)
       # loss_variance = criterion_dict["criterion_kendall_and_gal_variance"](output["logits_variance"], target)
       # loss_softmax = criterion_dict["criterion_kendall_and_gal_softmax"](output["softmax_output"], target)
       # loss = 0.2 * loss_variance + 1*loss_softmax
   
-    elif self.criterion_to_use == "kyles version":
+    elif self.criterion_to_use == "kyles_version":
       loss_variance = self.criterion_dict["criterion_kyles_variance"](output["logits_variance"], target)
       loss_softmax = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
       loss = 0.2 * loss_variance + 1*loss_softmax
     
-    elif self.criterion_to_use == "kyles version softmax only":
+    elif self.criterion_to_use == "softmax_only":
       loss = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
-
-      # Logging to TensorBoard
-      self.log("val_loss", loss.detach().item(), sync_dist=True) #, on_step=False, on_epoch=True, sync_dist=True)
 
     self.val_output_dict["loss"].append(loss)
     self.val_output_dict["logits"].append(output["logits_variance"][:, 0:self.num_classes])
     self.val_output_dict["softmax_pred"].append(torch.argmax(output["softmax_output"], dim=1))
     self.val_output_dict["target"].append(target) # acc_top_1": acc_top_1, "acc_top_5": acc_top_5, "ece": ece}
 
-    #return {"loss": loss, "logits":output["logits_variance"][:, 0:self.num_classes], "softmax_pred":output["softmax_output"], "target": target} # acc_top_1": acc_top_1, "acc_top_5": acc_top_5, "ece": ece}
     return loss
       # return sum(scores)/len(test_loader), sum(losses)/len(test_loader)
     
   # Logging to TensorBoard
   def on_validation_epoch_end(self):
-    all_loss = torch.stack(self.val_output_dict["loss"])
-    all_logits=torch.vstack(self.val_output_dict["logits"])
-    all_softmax_pred=torch.hstack(self.val_output_dict["softmax_pred"])
-    all_targets=torch.hstack(self.val_output_dict["target"])
+    self.log_metrics(output_dict = self.val_output_dict, prefix="val")
+    self.train_output_dict.clear()  # free memory
 
-    acc_top_1 = self.multiclass_top1_accuracy(preds=all_softmax_pred, target=all_targets)
-    acc_top_5 = self.multiclass_top5_accuracy(preds=all_logits, target=all_targets)
-    ece = self.multiclass_ece(preds=all_logits, target=all_targets)
-    mce = self.multiclass_mce(preds=all_logits, target=all_targets)
-    mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
-    self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
-
-    self.log("val_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
-    self.log("val_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("val_accuracy_top-5", acc_top_5, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("val_ece", ece, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("val_mce", mce, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log("val_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-
-    fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
-
-    self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys())
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    buf.seek(0)
-    im = transforms.ToTensor()(Image.open(buf))
-
-    self.logger.experiment.add_image(
-        "val_confusion_matrix",
-        im,
-        global_step=self.current_epoch,
-    )
-
-    # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_ece", training_step_outputs.ece.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.validation_step_outputs.clear()  # free memory
 
 
   def configure_optimizers(self):
@@ -211,3 +132,46 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     #optimizer = torch.optim.Adam(self.net.parameters(), **kwargs)
     scheduler = ExponentialLR(optimizer, gamma=0.9999)
     return [optimizer], [scheduler]
+
+
+  def log_metrics(self, output_dict, prefix):
+    all_loss = torch.stack(self.output_dict["loss"])
+    all_logits=torch.vstack(self.output_dict["logits"])
+    all_softmax_pred=torch.hstack(self.output_dict["softmax_pred"])
+    all_targets=torch.hstack(self.output_dict["target"])
+
+    acc_top_1 = self.multiclass_top1_accuracy(preds=all_softmax_pred, target=all_targets)
+    acc_top_5 = self.multiclass_top5_accuracy(preds=all_logits, target=all_targets)
+    ece = self.multiclass_ece(preds=all_logits, target=all_targets)
+    mce = self.multiclass_mce(preds=all_logits, target=all_targets)
+    mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
+    self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
+
+    self.log(prefix + "_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
+    self.log(prefix + "_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_accuracy_top-5", acc_top_5, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_ece", ece, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+    # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
+    if prefix == "val" or self.current_epoch%25==0:
+      fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
+
+      self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys())
+
+      buf = io.BytesIO()
+      fig.savefig(buf, format="png", bbox_inches="tight")
+      buf.seek(0)
+      im = transforms.ToTensor()(Image.open(buf))
+
+      self.logger.experiment.add_image(
+          prefix + "_confusion_matrix",
+          im,
+          global_step=self.current_epoch,
+      )
+
+    # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    # self.log("train_ece", training_step_outputs.ece.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    # self.validation_step_outputs.clear()  # free memory
