@@ -122,7 +122,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
   # Logging to TensorBoard
   def on_validation_epoch_end(self):
     self.log_metrics(output_dict = self.val_output_dict, prefix="val")
-    self.train_output_dict.clear()  # free memory
+    self.val_output_dict.clear()  # free memory
 
 
 
