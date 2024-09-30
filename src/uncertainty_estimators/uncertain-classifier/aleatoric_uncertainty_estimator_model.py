@@ -7,11 +7,12 @@ from torchvision.models import resnet50
 
 
 class Net(nn.Module):
-  def __init__(self, image_size, num_classes, encoder): # input_size, output_size, hidden_size, hidden_count):
+  def __init__(self, image_size, num_classes, encoder, freeze_encoder_params): # input_size, output_size, hidden_size, hidden_count):
     super(Net, self).__init__()
     self.image_size = image_size
     self.num_classes = num_classes
-    self.backbone = self.create_encoder_model(encoder)
+    self.backbone = self.create_encoder_model(encoder),
+    self.freeze_encoder_params  = freeze_encoder_params
 
     # bayesian network part
     backbone_output_size = 2048 # Imagenette with image size 3 x 224 x 224
@@ -49,9 +50,10 @@ class Net(nn.Module):
     else:
       raise ValueError('Unexpected encoder model ' + encoder + ".")
 
-    # freeze encoder layers to prevent over fitting
-    # for param in base_model.parameters():
-    #   param.requires_grad = False
+    if self.freeze_encoder_params:
+      # freeze encoder layers to prevent over fitting
+      for param in base_model.parameters():
+        param.requires_grad = False
 
     return base_model
   

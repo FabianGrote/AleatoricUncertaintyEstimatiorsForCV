@@ -128,8 +128,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
   def configure_optimizers(self):
     kwargs = dict(lr=1e-4, weight_decay=0.0001)
-    optimizer = torch.optim.RMSprop(self.net.parameters(), lr=0.001, weight_decay=0.0001)
-    #optimizer = torch.optim.Adam(self.net.parameters(), **kwargs)
+    # optimizer = torch.optim.RMSprop(self.net.parameters(), lr=0.001, weight_decay=0.0001)
+    optimizer = torch.optim.Adam(self.net.parameters(), **kwargs)
     scheduler = ExponentialLR(optimizer, gamma=0.9999)
     return [optimizer], [scheduler]
 

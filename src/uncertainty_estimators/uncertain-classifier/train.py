@@ -22,7 +22,8 @@ parser.add_argument("--accelerator", default="cpu", help="cpu or gpu", type=str)
 parser.add_argument("--devices", default=1, help="Number of GPU nodes for distributed training.", type=int)
 parser.add_argument("--num_nodes", default=1, help="Number of GPU nodes for distributed training.", type=int)
 parser.add_argument("--max_epochs", default=100, help="Stop training once this number of epochs is reached.", type=int)
-parser.add_argument("--dataset", default="Imagenette", help="Dataset to use. Can be: Imagenette, ...", type=str)
+parser.add_argument("--dataset", default="Imagenette", help="Dataset to use. Can be: Imagenette, MNIST, ...", type=str)
+parser.add_argument("--freeze_encoder_params", default=True, help="If encoder parameters should be freezed or not.", type=bool)
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -78,7 +79,7 @@ else:
 
 
 train_loader = torch.utils.data.DataLoader(
-  train_dataset, batch_size=40, shuffle=False, num_workers=8 # sampler=DistributedSampler(train_dataset)
+  train_dataset, batch_size=40, shuffle=True, num_workers=8 # sampler=DistributedSampler(train_dataset)
 )
 
 val_loader = torch.utils.data.DataLoader(
@@ -87,10 +88,12 @@ val_loader = torch.utils.data.DataLoader(
 
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 num_classes = len(train_dataset.classes)
+freeze_encoder_params = args.freeze_encoder_params
 net = aleatoric_uncertainty_estimator_model.Net(
   image_size = (3, 224, 224), # channels x width x height
   num_classes = num_classes, # imagenette: 10, 
-  encoder = "resnet50"
+  encoder = "resnet50",
+  freeze_encoder_params = freeze_encoder_params
 )
 
 lr_monitor = LearningRateMonitor(logging_interval='step')
@@ -105,14 +108,14 @@ criterion_dict = {
   # For softmax network output in Kyles version
   "criterion_kyles_softmax": nn.CrossEntropyLoss(),
 }
-criterion_to_use = "kyles_version" # "kendall_and_gal" or "kyles_version" or "softmax_only"
+criterion_to_use = "kyles_version" # "kyles_version" # "kendall_and_gal" or "kyles_version" or "softmax_only"
 
 time = time.strftime("%Y%m%d_%H-%M")
 # default logger used by trainer (if tensorboard is installed)
 logger = TensorBoardLogger(
   save_dir=os.getcwd(),
   name="lightning_logs",
-  version="uncertainty_classifier_" + criterion_to_use + "_" + time
+  version=dataset + "_" + criterion_to_use + "_freeze_encoder-" + freeze_encoder_params + "_" + time
 )
 
 
@@ -125,7 +128,8 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   criterion_dict = criterion_dict, 
   predict = predict,
   num_classes = num_classes,
-  class_labels = class_labels
+  class_labels = class_labels,
+  freezer_encoder_params = freeze_encoder_params
 )
 trainer = L.Trainer(
   check_val_every_n_epoch=5,
