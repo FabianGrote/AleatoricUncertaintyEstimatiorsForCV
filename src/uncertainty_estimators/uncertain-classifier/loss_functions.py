@@ -37,25 +37,31 @@ class Loss(torch.nn.Module):
   # returns - loss (N,)
 class BayesianCategoricalCrossEntropy_KylesVersion(torch.nn.Module):
   def __init__(self, T=100, num_classes=10):
+    super(BayesianCategoricalCrossEntropy_KylesVersion,self).__init__()
     self.T = T
     self.num_classes = num_classes
+    self.cross_entropy_loss = nn.CrossEntropyLoss()
+    self.cross_entropy_loss_gaussian = nn.CrossEntropyLoss()
 
-  def forward(self, true, pred_var):
+  def forward(self, pred_var, true):
     # shape: (N,)
     std = torch.sqrt(pred_var[:, self.num_classes:])
     # shape: (N,)
     variance = pred_var[:, self.num_classes]
-    variance_depressor = torch.ex(variance) - torch.ones_like(variance)
+    variance_depressor = torch.mean(torch.exp(variance) - torch.ones_like(variance))
     # shape: (N, C)
     pred = pred_var[:, 0:self.num_classes]
       
     # shape: (N,)
-    undistorted_loss = nn.CrossEntropyLoss(pred, true)
+    undistorted_loss = self.cross_entropy_loss(pred, true)
 
     iterable = torch.ones(self.T)
-    dist = torch.normal(mean=torch.zeros_like(std), scale=std)
+    dist = torch.distributions.normal.Normal(loc=torch.zeros_like(std), scale=std)
     # monte carlo
-    monte_carlo_results = torch.vmap(self.gaussian_categorical_crossentropy(true, pred, dist, undistorted_loss, self.num_classes))(iterable)
+    monte_carlo_results = torch.vmap(
+      self.gaussian_categorical_crossentropy(true, pred, dist, undistorted_loss, self.num_classes),
+      randomness='different'
+    )(iterable)
     variance_loss = torch.mean(monte_carlo_results, axis=0) * undistorted_loss
       
     return variance_loss + undistorted_loss + variance_depressor
@@ -72,8 +78,9 @@ class BayesianCategoricalCrossEntropy_KylesVersion(torch.nn.Module):
   # returns - total differences for all classes (N,)
   def gaussian_categorical_crossentropy(self, true, pred, dist, undistorted_loss, num_classes):
     def map_fn(i):
-      std_samples = torch.transpose(dist.sample(num_classes))
-      distorted_loss = nn.CrossEntropyLoss(pred + std_samples, true)
+      std_samples = torch.transpose(dist.sample(sample_shape=torch.Size([num_classes])).flatten(start_dim=1, end_dim=2), dim0=0, dim1=1)
+      # distorted_loss is a BatchedTensor of shape [number Monte Carlo Simulations] becuase of torch.vmaps()
+      distorted_loss = self.cross_entropy_loss_gaussian(pred + std_samples, true)
       diff = undistorted_loss - distorted_loss
       return -nn.ELU()(diff)
     return map_fn
@@ -86,17 +93,18 @@ class BayesianCategoricalCrossEntropy_KylesVersion(torch.nn.Module):
 # returns - loss (N)
 class BayesianCategoricalCrossEntropy_KendallAndGalsVersion(torch.nn.Module):
   def __init__(self, T=100, num_classes=10):
+    super(BayesianCategoricalCrossEntropy_KendallAndGalsVersion,self).__init__()
     self.T = T
     self.num_classes = num_classes
 
-  def forward(self, true, pred_var):
+  def forward(self, pred_var, true):
     # shape: [N, 1]
     std_vals = torch.sqrt(pred_var[:, self.num_classes:])
     # shape: [N, C]
     std = true * std_vals
     pred = pred_var[:, 0:self.num_classes]
     iterable = torch.ones(self.T)
-    dist = torch.normal(mean=torch.zeros_like(std), scale=std)
+    dist = torch.distributions.normal.Normal(loc=torch.zeros_like(std), scale=std)
     # Shape: (T, N)
     monte_carlo_results = torch.vmap(self.gaussian_categorical_crossentropy(true, pred, dist))(iterable)
     return torch.mean(monte_carlo_results, axis=0)
