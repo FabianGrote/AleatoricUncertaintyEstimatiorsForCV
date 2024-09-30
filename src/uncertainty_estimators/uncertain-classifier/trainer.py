@@ -135,10 +135,10 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
 
   def log_metrics(self, output_dict, prefix):
-    all_loss = torch.stack(self.output_dict["loss"])
-    all_logits=torch.vstack(self.output_dict["logits"])
-    all_softmax_pred=torch.hstack(self.output_dict["softmax_pred"])
-    all_targets=torch.hstack(self.output_dict["target"])
+    all_loss = torch.stack(output_dict["loss"])
+    all_logits=torch.vstack(output_dict["logits"])
+    all_softmax_pred=torch.hstack(output_dict["softmax_pred"])
+    all_targets=torch.hstack(output_dict["target"])
 
     acc_top_1 = self.multiclass_top1_accuracy(preds=all_softmax_pred, target=all_targets)
     acc_top_5 = self.multiclass_top5_accuracy(preds=all_logits, target=all_targets)
