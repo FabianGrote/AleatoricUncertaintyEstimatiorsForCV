@@ -113,7 +113,7 @@ criterion_dict = {
   # For softmax network output in Kyles version
   "criterion_kyles_softmax": nn.CrossEntropyLoss(),
 }
-criterion_to_use = "kyles version" # "kendall and gal" or "kyles version"
+criterion_to_use = "kyles version softmax only" # "kendall and gal" or "kyles version" or "kyles version softmax only"
 
 predict = aleatoric_uncertainty_estimator_model.predict
 

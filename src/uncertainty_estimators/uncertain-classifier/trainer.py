@@ -60,7 +60,10 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       # acc_top_5 = self.multiclass_top5_accuracy(output["softmax_output"], target)
       # ece = self.multiclass_ece(preds=output["logits_variance"][:, 0:self.num_classes], target=target)
       # confusion_matrix = self.multiclass_confusion_matrix()
-      self.log("train_loss_step_level", loss, on_step=True, on_epoch=False, prog_bar=True, logger=True)
+    elif self.criterion_to_use == "kyles version softmax only":
+      loss = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
+    
+    self.log("train_loss_step_level", loss, on_step=True, on_epoch=False, prog_bar=True, logger=True)
     
     self.train_output_dict["loss"].append(loss)
     self.train_output_dict["logits"].append(output["logits_variance"][:, 0:self.num_classes])
@@ -144,6 +147,9 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       loss_variance = self.criterion_dict["criterion_kyles_variance"](output["logits_variance"], target)
       loss_softmax = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
       loss = 0.2 * loss_variance + 1*loss_softmax
+    
+    elif self.criterion_to_use == "kyles version softmax only":
+      loss = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
 
       # Logging to TensorBoard
       self.log("val_loss", loss.detach().item(), sync_dist=True) #, on_step=False, on_epoch=True, sync_dist=True)
