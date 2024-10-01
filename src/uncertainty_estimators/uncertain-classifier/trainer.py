@@ -56,7 +56,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     elif self.criterion_to_use == "kyles_version":
       loss_variance = self.criterion_dict["criterion_kyles_variance"](output["logits_variance"], target)
       loss_softmax = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
-      loss = 0.2 * loss_variance + 1*loss_softmax
+      loss = 0.2 * loss_variance + 0.8*loss_softmax  # before: 1*loss_softmax
       # acc_top_1 = self.multiclass_top1_accuracy(output["softmax_output"], target)
       # acc_top_5 = self.multiclass_top5_accuracy(output["softmax_output"], target)
       # ece = self.multiclass_ece(preds=output["logits_variance"][:, 0:self.num_classes], target=target)
@@ -107,7 +107,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     elif self.criterion_to_use == "kyles_version":
       loss_variance = self.criterion_dict["criterion_kyles_variance"](output["logits_variance"], target)
       loss_softmax = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
-      loss = 0.2 * loss_variance + 1*loss_softmax
+      loss = 0.2 * loss_variance + 0.8*loss_softmax  # before: 1*loss_softmax
     
     elif self.criterion_to_use == "softmax_only":
       loss = self.criterion_dict["criterion_kyles_softmax"](output["softmax_output"], target)
@@ -171,6 +171,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
           im,
           global_step=self.current_epoch,
       )
+      self.multiclass_confusion_matrix.reset()
 
     # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
