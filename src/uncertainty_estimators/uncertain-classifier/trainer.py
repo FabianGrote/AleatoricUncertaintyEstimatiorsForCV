@@ -14,7 +14,7 @@ from PIL import Image
 
 # define the LightningModule
 class AleatoricUncertaintyEstimator(L.LightningModule):
-  def __init__(self, net, criterion_to_use, criterion_dict, predict, num_classes, class_labels):
+  def __init__(self, net, criterion_to_use, criterion_dict, predict, num_classes, class_labels, log_confusion_matrix):
     super().__init__()
     self.net = net
     self.criterion_to_use = criterion_to_use
@@ -31,6 +31,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.multiclass_mce = MulticlassCalibrationError(num_classes = self.num_classes, n_bins=10, norm="max")
     self.mean_squared_error = MeanSquaredError()
     self.multiclass_confusion_matrix = MulticlassConfusionMatrix(num_classes=self.num_classes)
+    self.log_confusion_matrix = log_confusion_matrix
 
   def on_train_epoch_start(self) -> None:
     super().on_train_epoch_start()
@@ -155,7 +156,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
-    if prefix == "val" or self.current_epoch%25==0:
+    if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
       fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
 
       self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys(), cmap="OrRd")

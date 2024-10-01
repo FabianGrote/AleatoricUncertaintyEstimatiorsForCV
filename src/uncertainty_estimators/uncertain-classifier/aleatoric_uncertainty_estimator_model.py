@@ -11,25 +11,25 @@ class Net(nn.Module):
     super(Net, self).__init__()
     self.image_size = image_size
     self.num_classes = num_classes
-    self.backbone = self.create_encoder_model(encoder),
     self.freeze_encoder_params  = freeze_encoder_params
+    self.backbone = self.create_encoder_model(encoder)
 
     # bayesian network part
     backbone_output_size = 2048 # Imagenette with image size 3 x 224 x 224
     self.batch_norm_1 = nn.BatchNorm1d(num_features=backbone_output_size)
-    self.batch_norm_2 = nn.BatchNorm1d(num_features=500)
-    self.batch_norm_3 = nn.BatchNorm1d(num_features=100)
-    self.linear_1 = nn.Linear(in_features=backbone_output_size, out_features=500)
-    self.linear_2 = nn.Linear(in_features=500, out_features=100)
-    self.linear_3 = nn.Linear(in_features=100, out_features=num_classes)
+    self.batch_norm_2 = nn.BatchNorm1d(num_features=500)# (num_features=2000)#(num_features=500)
+    self.batch_norm_3 = nn.BatchNorm1d(num_features=100)#(num_features=1500)#(num_features=100)
+    self.linear_1 = nn.Linear(in_features=backbone_output_size, out_features=500)# (in_features=backbone_output_size, out_features=2000)
+    self.linear_2 = nn.Linear(in_features=500, out_features=100)# (in_features=2000, out_features=1500)
+    self.linear_3 = nn.Linear(in_features=100, out_features=num_classes)# (in_features=1500, out_features=num_classes)
     self.relu_1 = nn.ReLU()
     self.relu_2 = nn.ReLU()
-    self.linear_variance = nn.Linear(in_features=100, out_features=1)
+    self.linear_variance = nn.Linear(in_features=100, out_features=1) #(in_features=1500, out_features=1) # (in_features=100, out_features=1)
     self.softplus = nn.Softplus()
     self.softmax = nn.Softmax(dim=-1)
 
     # # Layer only used for Uncertainty Classifier GitHub that takes 2*num_classes as output size
-    self.sigma2_uc_github_approach_linear = nn.Linear(in_features=100, out_features=num_classes)
+    self.sigma2_uc_github_approach_linear = nn.Linear(in_features=100, out_features=num_classes) #(in_features=1500, out_features=num_classes)
 
   def forward(self, x):
     backbone_output = self.backbone(x)
