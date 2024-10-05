@@ -152,6 +152,11 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Lightning logs
+src/uncertainty_estimators/uncertain-classifier/lightning_logs/
+src/uncertainty_estimators/uncertain-classifier/final_lightning_log_results/
+
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
