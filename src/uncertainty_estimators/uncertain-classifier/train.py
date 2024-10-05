@@ -45,8 +45,13 @@ train_dataset, val_dataset, class_labels, image_size = get_dataset(dataset_name=
 train_loader = torch.utils.data.DataLoader(
   train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=8 # sampler=DistributedSampler(train_dataset)
 )
+
+if config["augment_data"]:
+  val_batch_size = 1
+else:
+  val_batch_size = config["batch_size"]
 val_loader = torch.utils.data.DataLoader(
-  val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
+  val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
 )
 
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')#
@@ -101,7 +106,9 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   predict = predict,
   num_classes = num_classes,
   class_labels = class_labels,
-  log_confusion_matrix=log_confusion_matrix
+  log_confusion_matrix=log_confusion_matrix,
+  augment_val_data=config["augment_data"],
+  num_data_augmentations=config["num_data_augmentations"],
 )
 trainer = L.Trainer(
   check_val_every_n_epoch=5,
