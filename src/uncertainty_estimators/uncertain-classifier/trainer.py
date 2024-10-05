@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import lightning as L
 from torch.optim.lr_scheduler import ExponentialLR
 
-from torchmetrics.classification import MulticlassAccuracy, MulticlassCalibrationError, MulticlassConfusionMatrix
+from torchmetrics.classification import MulticlassAccuracy, MulticlassCalibrationError, MulticlassConfusionMatrix, MulticlassROC, MulticlassAUROC
 from torchmetrics import MeanSquaredError
 # from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -35,6 +35,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     # "max" as norm is maximum calibration error 
     self.multiclass_mce = MulticlassCalibrationError(num_classes = self.num_classes, n_bins=10, norm="max")
     self.mean_squared_error = MeanSquaredError()
+    self.multiclass_roc = MulticlassROC(num_classes=self.num_classes)
+    self.multiclass_auroc = MulticlassAUROC(num_classes=self.num_classes)
     self.multiclass_confusion_matrix = MulticlassConfusionMatrix(num_classes=self.num_classes)
     self.log_confusion_matrix = log_confusion_matrix
 
@@ -175,14 +177,19 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     ece = self.multiclass_ece(preds=all_logits, target=all_targets)
     mce = self.multiclass_mce(preds=all_logits, target=all_targets)
     mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
+    roc = self.multiclass_roc(preds=all_softmax_pred, target=all_targets)
+    auroc = self.multiclass_auroc(preds=all_softmax_pred, target=all_targets)
+    
     self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
 
     self.log(prefix + "_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
     self.log(prefix + "_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
     self.log(prefix + "_accuracy_top-5", acc_top_5, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log(prefix + "_ece", ece, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_ece", ece, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    self.log(prefix + "_roc", roc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    self.log(prefix + "_auroc" , auroc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
     if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
