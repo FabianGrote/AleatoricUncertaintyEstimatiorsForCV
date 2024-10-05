@@ -105,66 +105,25 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       logits_variance_all = []
       sigma2_uc_github_approach_all = []
 
-      labels_all = []
       for i in range(self.num_data_augmentations):
         augmented_data = self.data_augmentation(data)
-        output = self.net(augmented_data)
-        softmax_output_all.append(output["softmax_output"])
-        logits_variance_all.append(output["logits_variance"])
-        sigma2_uc_github_approach_all.append(output["sigma2_uc_github_approach"])
-        labels_all.append(target)
+        single_output = self.net(augmented_data)
+        softmax_output_all.append(single_output["softmax_output"])
+        logits_variance_all.append(single_output["logits_variance"])
+        sigma2_uc_github_approach_all.append(single_output["sigma2_uc_github_approach"])
 
+      # Convert from a list of T items to tensor   
+      softmax_output = torch.vstack(softmax_output_all)
+      logits_variance = torch.vstack(logits_variance_all)
+      sigma2_uc_github_approach = torch.vstack(sigma2_uc_github_approach_all)
 
-      print("FINITIO")
-            
-  #       x_batch = np.reshape(np.asarray(images, dtype=np.float32), [-1, 512, 512, 3])
-  #       y_batch = np.reshape(np.asarray(labels, dtype=np.float32), [-1, 1])
-        
-  #       predictions, labels = model.session.run([model.predictions_1hot, model.labels_1hot], 
-  #                                               feed_dict=feed_dict(model, x_batch, y_batch)
-  #                                              )        
-  #       labels_all.append(labels[0])
-  #       predictions_all.append(predictions)        
-        
-  #       if k != -1:
-  #           k = k - 1
-  #           if k == 0:
-  #               dr.exhausted_test_cases = True
-  #           print('k = %d' % k)
-  #       kkk = kkk + 1
-  #       if kkk % 1000 == 0:
-  #           print('kkk = %d' % kkk)
-  #   print('kkk = %d' % kkk)
+      # use the median of T predictions for the final class membership: Mx1x5
+      output = {
+        "softmax_output": torch.median(softmax_output, dim=0).values.unsqueeze(dim=0),
+        "logits_variance": torch.median(logits_variance, dim=0).values.unsqueeze(dim=0),
+        "sigma2_uc_github_approach": torch.median(sigma2_uc_github_approach, dim=0).values.unsqueeze(dim=0)
+      }
     
-  #   # Convert from a list of M items of size Tx5 to an array of dims MxTx5. For labels_1hot: Mx5.   
-  #   labels_1hot = np.asarray(labels_all)
-    
-  #   predictions_all = np.asarray(predictions_all)
-    
-  #   # use the median of T predictions for the final class membership: Mx1x5
-  #   predictions_1hot_median = np.median(predictions_all, axis=1)
-    
-  #   correct = np.equal(np.argmax(labels_1hot, axis=1), np.argmax(predictions_1hot_median, axis=1))
-  #   acc = np.mean(np.asarray(correct, dtype=np.float32))
-  #   print('Accuracy : %.5f' % acc)
-        
-  #   onset_level = 1
-  #   labels_bin = np.greater_equal(np.argmax(labels_1hot, axis=1), onset_level)
-  #   pred_bin = np.sum(predictions_all[:, :, onset_level:], axis=2) # MxTx1
-  #   pred_bin_median = np.median(pred_bin, axis=1) # Mx1x1  
-  #   fpr, tpr, _ = roc_curve(labels_bin, np.squeeze(pred_bin_median))
-  #   roc_auc_onset1 = auc(fpr, tpr)
-  #   print('Onset level = %d\t ROC-AUC: %.5f' % (onset_level, roc_auc_onset1))
-            
-  #   onset_level = 2
-  #   labels_bin = np.greater_equal(np.argmax(labels_1hot, axis=1), onset_level)
-  #   pred_bin = np.sum(predictions_all[:, :, onset_level:], axis=2) # MxTx1
-  #   pred_bin_median = np.median(pred_bin, axis=1) # Mx1x1  
-  #   fpr, tpr, _ = roc_curve(labels_bin, np.squeeze(pred_bin_median))
-  #   roc_auc_onset1 = auc(fpr, tpr)
-  #   print('Onset level = %d\t ROC-AUC: %.5f' % (onset_level, roc_auc_onset1))
-        
-  #   return labels_1hot, predictions_all
     else:
       output = self.net(data)
     
