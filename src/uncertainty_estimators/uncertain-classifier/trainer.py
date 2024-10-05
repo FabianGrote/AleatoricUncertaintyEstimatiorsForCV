@@ -177,8 +177,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     ece = self.multiclass_ece(preds=all_logits, target=all_targets)
     mce = self.multiclass_mce(preds=all_logits, target=all_targets)
     mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
-    roc = self.multiclass_roc(preds=all_softmax_pred, target=all_targets)
-    auroc = self.multiclass_auroc(preds=all_softmax_pred, target=all_targets)
+    roc = self.multiclass_roc(preds=all_logits, target=all_targets)
+    auroc = self.multiclass_auroc(preds=all_logits, target=all_targets)
     
     self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
 
