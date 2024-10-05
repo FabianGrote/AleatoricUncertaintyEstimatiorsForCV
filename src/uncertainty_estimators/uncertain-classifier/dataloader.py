@@ -1,7 +1,7 @@
 from torchvision import transforms, datasets
 from data_augmentation import DataAugmentation
 
-def get_dataset(dataset_name, augment_data, num_data_augmentations):
+def get_dataset(dataset_name, augment_data):
     if dataset_name == "ImageNet":
         train_dataset = datasets.ImageNet( # ImageNet or Imagenette
             # root = "~/datasets/ImageNet2012",   # BwUniCloud nette-download", #Net2012", # ImageNet2012",
@@ -12,7 +12,7 @@ def get_dataset(dataset_name, augment_data, num_data_augmentations):
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                DataAugmentation(augment_data, num_data_augmentations)
+                DataAugmentation(augment_data)
             ])
         )
         val_dataset = datasets.ImageNet( # ImageNet or Imagenette
@@ -39,7 +39,7 @@ def get_dataset(dataset_name, augment_data, num_data_augmentations):
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                DataAugmentation(augment_data, num_data_augmentations)
+                DataAugmentation(augment_data)
             ])
             )
         val_dataset = datasets.Imagenette(
@@ -63,7 +63,7 @@ def get_dataset(dataset_name, augment_data, num_data_augmentations):
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,)),
                 transforms.Lambda(lambda x: x.repeat(3, 1, 1) ),
-                DataAugmentation(augment_data, num_data_augmentations)
+                DataAugmentation(augment_data)
             ])
         )
         val_dataset = datasets.MNIST(
@@ -86,7 +86,7 @@ def get_dataset(dataset_name, augment_data, num_data_augmentations):
                 transforms.Resize((32, 32)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.3403, 0.3121, 0.3214), std=(0.2724, 0.2608, 0.2669)),
-                DataAugmentation(augment_data, num_data_augmentations)
+                DataAugmentation(augment_data)
             ])
         )
         val_dataset = datasets.GTSRB(
