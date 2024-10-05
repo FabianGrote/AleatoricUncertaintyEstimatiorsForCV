@@ -80,12 +80,18 @@ criterion_to_use = config["criterion_to_use"] # "kendall_and_gal" or "kyles_vers
 
 time = time.strftime("%Y%m%d_%H-%M")
 # default logger used by trainer (if tensorboard is installed)
+log_folder = dataset_name + "_" + criterion_to_use + "_freeze_encoder-" + str(freeze_encoder_params) + "_augmentation_data-" + str(config["augment_data"]) + "_" + time
 logger = TensorBoardLogger(
   save_dir=os.getcwd(),
   name="lightning_logs",
-  version=dataset_name + "_" + criterion_to_use + "_freeze_encoder-" + str(freeze_encoder_params) + "_augmentation_data-" + str(config["augment_data"]) + "_" + time
+  version=log_folder
 )
 
+log_path = my_path.parent / "lightning_logs" / log_folder
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
+with open(log_path / 'config_save.yaml', 'w') as f:
+    yaml.dump(config, f,  default_flow_style=False)
 
 predict = aleatoric_uncertainty_estimator_model.predict
 
