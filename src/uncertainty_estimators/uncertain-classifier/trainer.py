@@ -25,7 +25,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.class_labels = class_labels
     self.augment_val_data = augment_val_data
     self.num_data_augmentations = num_data_augmentations
-    self.data_augmentation = DataAugmentation(augment_data=True)
+    # self.data_augmentation = DataAugmentation(augment_data=True, DataAugmentation(augment_data, num_data_augmentations, val=True))
 
 
     self.multiclass_top1_accuracy = MulticlassAccuracy(num_classes = self.num_classes, top_k=1)
@@ -95,35 +95,33 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
   def validation_step(self, batch, batch_idx):
     data, target = batch
-    # output = self.predict(data, self.net, device=self.device, T=1000, class_count=self.net.num_classes)
-      
-    # predictions = torch.argmax(output.data, 1)
-    # score = (predictions == target).float().mean().detach().item()
-      
-    # # Logging to TensorBoard
-    # self.log("val_score", score, sync_dist=True) #, on_step=False, on_epoch=True, sync_dist=True)
+    data = data.flatten(start_dim=0, end_dim=1)
+
     if self.augment_val_data:
-      softmax_output_all = []
-      logits_variance_all = []
-      sigma2_uc_github_approach_all = []
+      # repeated_data = torch.repeat_interleave(data, self.num_data_augmentations, dim=0)
+      # # augmented_data_list = []
 
-      for i in range(self.num_data_augmentations):
-        augmented_data = self.data_augmentation(data)
-        single_output = self.net(augmented_data)
-        softmax_output_all.append(single_output["softmax_output"])
-        logits_variance_all.append(single_output["logits_variance"])
-        sigma2_uc_github_approach_all.append(single_output["sigma2_uc_github_approach"])
+      # # for i in range(self.num_data_augmentations):
+      # #   augmented_data_list.append(self.data_augmentation(data))
+      # augmented_data = self.data_augmentation(repeated_data)
 
-      # Convert from a list of T items to tensor   
-      softmax_output = torch.vstack(softmax_output_all)
-      logits_variance = torch.vstack(logits_variance_all)
-      sigma2_uc_github_approach = torch.vstack(sigma2_uc_github_approach_all)
+      # augmented_data = torch.vstack(repeated_data)
+      output_monte_carlo = self.net(data) # self.net(augmented_data)
 
       # use the median of T predictions for the final class membership: Mx1x5
       output = {
-        "softmax_output": torch.median(softmax_output, dim=0).values.unsqueeze(dim=0),
-        "logits_variance": torch.median(logits_variance, dim=0).values.unsqueeze(dim=0),
-        "sigma2_uc_github_approach": torch.median(sigma2_uc_github_approach, dim=0).values.unsqueeze(dim=0)
+        "softmax_output": torch.median(
+          output_monte_carlo["softmax_output"].reshape(
+            (target.shape[0], self.num_data_augmentations, output_monte_carlo["softmax_output"].shape[-1])
+          ), dim=1).values,
+        "logits_variance": torch.median(
+          output_monte_carlo["logits_variance"].reshape(
+            (target.shape[0], self.num_data_augmentations, output_monte_carlo["logits_variance"].shape[-1])
+          ), dim=1).values,
+        "sigma2_uc_github_approach": torch.median(
+          output_monte_carlo["sigma2_uc_github_approach"].reshape(
+            (target.shape[0], self.num_data_augmentations, output_monte_carlo["sigma2_uc_github_approach"].shape[-1])
+          ), dim=1).values
       }
     
     else:
@@ -177,10 +175,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     ece = self.multiclass_ece(preds=all_logits, target=all_targets)
     mce = self.multiclass_mce(preds=all_logits, target=all_targets)
     mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
-    roc = self.multiclass_roc(preds=all_logits, target=all_targets)
     auroc = self.multiclass_auroc(preds=all_logits, target=all_targets)
-    
-    self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
 
     self.log(prefix + "_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
     self.log(prefix + "_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -188,13 +183,13 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.log(prefix + "_ece", ece, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=False, logger=True)
-    self.log(prefix + "_roc", roc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_auroc" , auroc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
     if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
       fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
-
+      
+      self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
       self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys(), cmap="OrRd")
 
       buf = io.BytesIO()
@@ -208,6 +203,22 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
           global_step=self.current_epoch,
       )
       self.multiclass_confusion_matrix.reset()
+
+
+      self.multiclass_roc.update(preds=all_logits, target=all_targets)
+      fig_roc, ax_roc = self.multiclass_roc.plot(score=True) #, labels=self.class_labels.keys())
+      
+      buf = io.BytesIO()
+      fig_roc.savefig(buf, format="png", bbox_inches="tight")
+      buf.seek(0)
+      im = transforms.ToTensor()(Image.open(buf))
+
+      self.logger.experiment.add_image(
+          prefix + "_roc",
+          im,
+          global_step=self.current_epoch,
+      )
+      self.multiclass_roc.reset()
 
     # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
