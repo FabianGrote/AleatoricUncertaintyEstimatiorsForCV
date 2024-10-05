@@ -177,3 +177,72 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     # self.log("train_ece", training_step_outputs.ece.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     # self.validation_step_outputs.clear()  # free memory
+
+
+
+
+  # def inference_with_test_time_data_aug(reader, model, test_input, test_input_aug, T=32, k=-1):
+  #   labels_all = []
+  #   predictions_all = []
+    
+  #   kkk = 0
+    
+  #   while not reader.exhausted_test_cases:
+  #       org_ex, label, _ = reader.next_batch(batch_size=1, normalize=True, shuffle=False)
+        
+  #       feed_img = {test_input: org_ex}
+  #       images = []
+  #       labels = []
+  #       for i in range(T):
+  #           aug_ex = np.squeeze(model.session.run([test_input_aug], feed_dict=feed_img))
+  #           images.append(aug_ex)
+  #           labels.append(label)
+            
+  #       x_batch = np.reshape(np.asarray(images, dtype=np.float32), [-1, 512, 512, 3])
+  #       y_batch = np.reshape(np.asarray(labels, dtype=np.float32), [-1, 1])
+        
+  #       predictions, labels = model.session.run([model.predictions_1hot, model.labels_1hot], 
+  #                                               feed_dict=feed_dict(model, x_batch, y_batch)
+  #                                              )        
+  #       labels_all.append(labels[0])
+  #       predictions_all.append(predictions)        
+        
+  #       if k != -1:
+  #           k = k - 1
+  #           if k == 0:
+  #               dr.exhausted_test_cases = True
+  #           print('k = %d' % k)
+  #       kkk = kkk + 1
+  #       if kkk % 1000 == 0:
+  #           print('kkk = %d' % kkk)
+  #   print('kkk = %d' % kkk)
+    
+  #   # Convert from a list of M items of size Tx5 to an array of dims MxTx5. For labels_1hot: Mx5.   
+  #   labels_1hot = np.asarray(labels_all)
+    
+  #   predictions_all = np.asarray(predictions_all)
+    
+  #   # use the median of T predictions for the final class membership: Mx1x5
+  #   predictions_1hot_median = np.median(predictions_all, axis=1)
+    
+  #   correct = np.equal(np.argmax(labels_1hot, axis=1), np.argmax(predictions_1hot_median, axis=1))
+  #   acc = np.mean(np.asarray(correct, dtype=np.float32))
+  #   print('Accuracy : %.5f' % acc)
+        
+  #   onset_level = 1
+  #   labels_bin = np.greater_equal(np.argmax(labels_1hot, axis=1), onset_level)
+  #   pred_bin = np.sum(predictions_all[:, :, onset_level:], axis=2) # MxTx1
+  #   pred_bin_median = np.median(pred_bin, axis=1) # Mx1x1  
+  #   fpr, tpr, _ = roc_curve(labels_bin, np.squeeze(pred_bin_median))
+  #   roc_auc_onset1 = auc(fpr, tpr)
+  #   print('Onset level = %d\t ROC-AUC: %.5f' % (onset_level, roc_auc_onset1))
+            
+  #   onset_level = 2
+  #   labels_bin = np.greater_equal(np.argmax(labels_1hot, axis=1), onset_level)
+  #   pred_bin = np.sum(predictions_all[:, :, onset_level:], axis=2) # MxTx1
+  #   pred_bin_median = np.median(pred_bin, axis=1) # Mx1x1  
+  #   fpr, tpr, _ = roc_curve(labels_bin, np.squeeze(pred_bin_median))
+  #   roc_auc_onset1 = auc(fpr, tpr)
+  #   print('Onset level = %d\t ROC-AUC: %.5f' % (onset_level, roc_auc_onset1))
+        
+  #   return labels_1hot, predictions_all
