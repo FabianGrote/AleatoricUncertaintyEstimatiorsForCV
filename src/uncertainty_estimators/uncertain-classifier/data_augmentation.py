@@ -9,9 +9,8 @@ class DataAugmentation(object):
         "Test-time Data Augmentation for Estimation of Heteroscedastic 
         Aleatoric Uncertainty in Deep Neural Networks """
 
-    def __init__(self, augment_data, num_data_augmentations):
+    def __init__(self, augment_data):
         self.augment_data = augment_data
-        self.num_data_augmentation = num_data_augmentations
 
     def __call__(self, sample):
         if self.augment_data:
