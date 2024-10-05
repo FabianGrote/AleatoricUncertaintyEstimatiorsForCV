@@ -111,7 +111,7 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   num_data_augmentations=config["num_data_augmentations"],
 )
 trainer = L.Trainer(
-  check_val_every_n_epoch=5,
+  check_val_every_n_epoch=50,
   max_epochs=config["max_epochs"],
   devices=config["devices"],
   num_nodes=config["num_nodes"],
