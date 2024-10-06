@@ -2,11 +2,14 @@ accelerator:            gpu     # cpu or gpu
 devices:                1       # Number of GPU nodes for distributed training.
 num_nodes:              1       # Number of devices to train on (int), which devices to train on (list or str), or "auto".
 
-max_epochs:             1000     # Stop training once this number of epochs is reached.
+max_epochs:             2000     # Stop training once this number of epochs is reached.
 freeze_encoder_params:  True    # If encoder parameters should be freezed or not.
 
-dataset_name:           GTSRB   # Dataset to use. Can be: Imagenet, Imagenette, MNIST, GTSRB, ...
-batch_size:             40
+dataset_name:           GTSRB     # Dataset to use. Can be: Imagenet, Imagenette, MNIST, GTSRB, ...
+train_batch_size:       256
+val_batch_size:         6
+check_val_every_n_epoch: 25
+
 criterion_to_use:       softmax_only # Criterion to use. Can be 'kendall_and_gal', 'kyles_version' or 'softmax_only'
 num_mc_sims:            100      #  Number of Monte Carlo Simulations to run if bayesian approach is used.
 augment_data:           True     # Set if test time data augmentation should be performed. Can be true or false.

@@ -38,16 +38,17 @@ with open(config_path, 'r') as file:
   config = yaml.safe_load(file)
 
 dataset_name = config["dataset_name"]
+print("Training on dataset: ", dataset_name)
 freeze_encoder_params = config["freeze_encoder_params"]
 
 train_dataset, val_dataset, class_labels, image_size = get_dataset(dataset_name=dataset_name, augment_data=config["augment_data"], num_data_augmentations=config["num_data_augmentations"])
 
 train_loader = torch.utils.data.DataLoader(
-  train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=8 # sampler=DistributedSampler(train_dataset)
+  train_dataset, batch_size=config["train_batch_size"], shuffle=True, num_workers=8 # sampler=DistributedSampler(train_dataset)
 )
 
 val_loader = torch.utils.data.DataLoader(
-  val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
+  val_dataset, batch_size=config["val_batch_size"], shuffle=False, num_workers=8 #, sampler=DistributedSampler(val_dataset)
 )
 
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')#
@@ -113,7 +114,7 @@ aleatoricUncertaintyEstimator = trainer.AleatoricUncertaintyEstimator(
   num_data_augmentations=config["num_data_augmentations"],
 )
 trainer = L.Trainer(
-  check_val_every_n_epoch=5,
+  check_val_every_n_epoch=config["check_val_every_n_epoch"],
   max_epochs=config["max_epochs"],
   devices=config["devices"],
   num_nodes=config["num_nodes"],

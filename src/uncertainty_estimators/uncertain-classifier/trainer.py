@@ -74,7 +74,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.train_output_dict["loss"].append(loss)
     self.train_output_dict["logits"].append(output["logits_variance"][:, 0:self.num_classes])
     self.train_output_dict["softmax_pred"].append(torch.argmax(output["softmax_output"], dim=1))
-    self.train_output_dict["target"].append(target) # acc_top_1": acc_top_1, "acc_top_5": acc_top_5, "ece": ece}
+    self.train_output_dict["target"].append(target)
 
     return loss
 
@@ -95,9 +95,9 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
   def validation_step(self, batch, batch_idx):
     data, target = batch
-    data = data.flatten(start_dim=0, end_dim=1)
 
     if self.augment_val_data:
+      data = data.flatten(start_dim=0, end_dim=1)
       # repeated_data = torch.repeat_interleave(data, self.num_data_augmentations, dim=0)
       # # augmented_data_list = []
 
@@ -144,15 +144,15 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.val_output_dict["loss"].append(loss)
     self.val_output_dict["logits"].append(output["logits_variance"][:, 0:self.num_classes])
     self.val_output_dict["softmax_pred"].append(torch.argmax(output["softmax_output"], dim=1))
-    self.val_output_dict["target"].append(target) # acc_top_1": acc_top_1, "acc_top_5": acc_top_5, "ece": ece}
-
+    self.val_output_dict["target"].append(target)
+  
     return loss
-      # return sum(scores)/len(test_loader), sum(losses)/len(test_loader)
     
   # Logging to TensorBoard
   def on_validation_epoch_end(self):
     self.log_metrics(output_dict = self.val_output_dict, prefix="val")
     self.val_output_dict.clear()  # free memory
+    
 
 
 
@@ -185,8 +185,17 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_auroc" , auroc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
+    # free memory
+    self.multiclass_top1_accuracy.reset()
+    self.multiclass_top5_accuracy.reset()
+    self.multiclass_ece.reset()
+    self.multiclass_mce.reset()
+    self.mean_squared_error.reset()
+    self.multiclass_auroc.reset()
+
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
     if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
+      # log multiclass confusion matrix
       fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
       
       self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
@@ -202,9 +211,10 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
           im,
           global_step=self.current_epoch,
       )
+      # free memory
       self.multiclass_confusion_matrix.reset()
 
-
+      # log multiclass roc curves
       self.multiclass_roc.update(preds=all_logits, target=all_targets)
       fig_roc, ax_roc = self.multiclass_roc.plot(score=True) #, labels=self.class_labels.keys())
       
@@ -218,9 +228,5 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
           im,
           global_step=self.current_epoch,
       )
+      # free memory
       self.multiclass_roc.reset()
-
-    # self.log("train_accuracy_top-1", training_step_outputs.acc_top_1.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_accuracy_top-5", training_step_outputs.acc_top_5.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.log("train_ece", training_step_outputs.ece.mean(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-    # self.validation_step_outputs.clear()  # free memory
