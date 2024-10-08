@@ -12,6 +12,7 @@ import io
 from torchvision import transforms
 from PIL import Image
 from data_augmentation import DataAugmentation
+import torchvision
 
 # define the LightningModule
 class AleatoricUncertaintyEstimator(L.LightningModule):
@@ -29,6 +30,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
 
     self.multiclass_top1_accuracy = MulticlassAccuracy(num_classes = self.num_classes, top_k=1)
+    self.multiclass_top3_accuracy = MulticlassAccuracy(num_classes = self.num_classes, top_k=3)
     self.multiclass_top5_accuracy = MulticlassAccuracy(num_classes = self.num_classes, top_k=5)
     # "l1" as norm is expected calibration error 
     self.multiclass_ece = MulticlassCalibrationError(num_classes = self.num_classes, n_bins=10, norm="l1")
@@ -98,6 +100,10 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
     if self.augment_val_data:
       data = data.flatten(start_dim=0, end_dim=1)
+      if self.current_epoch == 0 and batch_idx < 20:
+        image_grid = torchvision.utils.make_grid(data[:9], nrow=3)
+        self.logger.experiment.add_image('val_augmented_images', image_grid, batch_idx)
+
       # repeated_data = torch.repeat_interleave(data, self.num_data_augmentations, dim=0)
       # # augmented_data_list = []
 
@@ -170,7 +176,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     all_softmax_pred=torch.hstack(output_dict["softmax_pred"])
     all_targets=torch.hstack(output_dict["target"])
 
-    acc_top_1 = self.multiclass_top1_accuracy(preds=all_softmax_pred, target=all_targets)
+    acc_top_1 = self.multiclass_top1_accuracy(preds=all_logits, target=all_targets)
+    acc_top_3 = self.multiclass_top3_accuracy(preds=all_logits, target=all_targets)
     acc_top_5 = self.multiclass_top5_accuracy(preds=all_logits, target=all_targets)
     ece = self.multiclass_ece(preds=all_logits, target=all_targets)
     mce = self.multiclass_mce(preds=all_logits, target=all_targets)
@@ -179,6 +186,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
     self.log(prefix + "_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
     self.log(prefix + "_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+    self.log(prefix + "_accuracy_top-3", acc_top_3, on_step=False, on_epoch=True, prog_bar=True, logger=True)
     self.log(prefix + "_accuracy_top-5", acc_top_5, on_step=False, on_epoch=True, prog_bar=True, logger=True)
     self.log(prefix + "_ece", ece, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=False, logger=True)
@@ -187,6 +195,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
 
     # free memory
     self.multiclass_top1_accuracy.reset()
+    self.multiclass_top3_accuracy.reset()
     self.multiclass_top5_accuracy.reset()
     self.multiclass_ece.reset()
     self.multiclass_mce.reset()
