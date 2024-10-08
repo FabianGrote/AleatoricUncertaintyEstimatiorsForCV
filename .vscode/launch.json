@@ -11,7 +11,7 @@
             "purpose":["debug-in-terminal"]
         },
         {
-            "name": "UE train Kendall and Gal regression",
+            "name": "UE train Kendall and Gal Imagenette",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/train.py",
@@ -19,11 +19,46 @@
             "cwd": "${fileDirname}",
             "purpose":["debug-in-terminal"],
             "args": [
-                "aleatoric"
+                "--accelerator", "gpu",
+                "--devices", "1",
+                "--num_nodes", "1",
+                "--max_epochs", "250",
+                "--dataset", "Imagenette",
+                "--freeze_encoder_params", "True",
+                "--criterion_to_use", "kyles_version",
             ]
         },
         {
-            "name": "UE vis Kendall and Gal regression",
+            "name": "UE train Kendall and Gal",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/train.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "purpose":["debug-in-terminal"],
+            "args": []
+        }, 
+        {
+            "name": "UE train Kendall and Gal GTSRB",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/train.py",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}",
+            "purpose":["debug-in-terminal"],
+            "args": [
+                "--accelerator", "gpu",
+                "--devices", "1",
+                "--num_nodes", "1",
+                "--max_epochs", "2500",
+                "--dataset", "GTSRB",
+                "--freeze_encoder_params", "True",
+                "--criterion_to_use", "kyles_version",
+            ]
+        }, 
+
+        {
+            "name": "UE vis Kendall and Gal",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/uncertainty_estimators/uncertain-classifier/vis.py",
