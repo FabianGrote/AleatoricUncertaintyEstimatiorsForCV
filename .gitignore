@@ -155,7 +155,11 @@ cython_debug/
 # Lightning logs
 src/uncertainty_estimators/uncertain-classifier/lightning_logs/
 src/uncertainty_estimators/uncertain-classifier/final_lightning_log_results/
+src/uncertainty_estimators/uncertain-classifier/old_final_lightning_log_results/
+.vscode/lightning_logs/
 
+# propably old training folder
+src/uncertainty_estimators/uncertain-classifier/data/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

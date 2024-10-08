@@ -6,6 +6,7 @@ jupyter
 torch
 torchvision
 torchmetrics
+lightning
 tqdm
 scipy
 matplotlib
