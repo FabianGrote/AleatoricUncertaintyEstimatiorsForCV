@@ -205,13 +205,13 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
     if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
       # log multiclass confusion matrix
-      fig, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
+      fig_cm, ax = plt.subplots(figsize=(self.num_classes, self.num_classes))
       
       self.multiclass_confusion_matrix.update(preds=all_softmax_pred, target=all_targets)
       self.multiclass_confusion_matrix.plot(ax=ax, labels=self.class_labels.keys(), cmap="OrRd")
 
       buf = io.BytesIO()
-      fig.savefig(buf, format="png", bbox_inches="tight")
+      fig_cm.savefig(buf, format="png", bbox_inches="tight")
       buf.seek(0)
       im = transforms.ToTensor()(Image.open(buf))
 
@@ -222,6 +222,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       )
       # free memory
       self.multiclass_confusion_matrix.reset()
+      plt.close(fig_cm)
 
       # log multiclass roc curves
       self.multiclass_roc.update(preds=all_logits, target=all_targets)
@@ -237,5 +238,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
           im,
           global_step=self.current_epoch,
       )
+
       # free memory
       self.multiclass_roc.reset()
+      plt.close(fig_roc)
