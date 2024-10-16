@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torchmetrics.classification import MulticlassAccuracy, MulticlassCalibrationError, MulticlassConfusionMatrix
 from torchmetrics.classification import MulticlassROC, MulticlassAUROC, MulticlassPrecisionRecallCurve
 from torchmetrics import MeanSquaredError
+from torcheval.metrics import MulticlassAUPRC
 # from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import io
@@ -41,7 +42,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.multiclass_roc = MulticlassROC(num_classes=self.num_classes)
     self.multiclass_auroc = MulticlassAUROC(num_classes=self.num_classes)
     self.multiclass_prc = MulticlassPrecisionRecallCurve(num_classes=self.num_classes, average=None)
-    self.multiclass_prc_macro = MulticlassPrecisionRecallCurve(num_classes=self.num_classes, average="macro")
+    self.multiclass_prc_micro = MulticlassPrecisionRecallCurve(num_classes=self.num_classes, average="micro")
+    self.multiclass_auprc = MulticlassAUPRC(num_classes=self.num_classes)
     self.multiclass_confusion_matrix = MulticlassConfusionMatrix(num_classes=self.num_classes)
     self.log_confusion_matrix = log_confusion_matrix
 
@@ -186,6 +188,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     mce = self.multiclass_mce(preds=all_logits, target=all_targets)
     mse = self.mean_squared_error(preds=all_softmax_pred, target=all_targets)
     auroc = self.multiclass_auroc(preds=all_logits, target=all_targets)
+    self.multiclass_auprc.update(input=all_logits, target=all_targets)
+    auprc = self.multiclass_auprc.compute()
 
     self.log(prefix + "_loss_epoch_level", all_loss.mean(), on_step=False, on_epoch=True)
     self.log(prefix + "_accuracy_top-1", acc_top_1, on_step=False, on_epoch=True, prog_bar=True, logger=True)
@@ -195,6 +199,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.log(prefix + "_mce", mce, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_mse_brier-score", mse, on_step=False, on_epoch=True, prog_bar=False, logger=True)
     self.log(prefix + "_auroc" , auroc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
+    self.log(prefix + "_auprc" , auprc, on_step=False, on_epoch=True, prog_bar=False, logger=True)
 
     # free memory
     self.multiclass_top1_accuracy.reset()
@@ -204,6 +209,7 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.multiclass_mce.reset()
     self.mean_squared_error.reset()
     self.multiclass_auroc.reset()
+    self.multiclass_auprc.reset()
 
     # log confusion matrix only for val and every x train epoch because it creates and saves an memory expensive image every time
     if self.log_confusion_matrix and (prefix == "val" or self.current_epoch%25==0):
@@ -266,20 +272,20 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       self.multiclass_prc.reset()
       plt.close(fig_prc)
 
-      self.multiclass_prc_macro.update(preds=all_logits, target=all_targets)
-      fig_prc_macro, ax_prc_macro = self.multiclass_prc_macro.plot(score=False) #, labels=self.class_labels.keys())
+      self.multiclass_prc_micro.update(preds=all_logits, target=all_targets)
+      fig_prc_micro, ax_prc_micro = self.multiclass_prc_micro.plot(score=False) #, labels=self.class_labels.keys())
       
       buf = io.BytesIO()
-      fig_prc_macro.savefig(buf, format="png", bbox_inches="tight")
+      fig_prc_micro.savefig(buf, format="png", bbox_inches="tight")
       buf.seek(0)
       im = transforms.ToTensor()(Image.open(buf))
 
       self.logger.experiment.add_image(
-          prefix + "_precision_reall_curve_macro",
+          prefix + "_precision_reall_curve_micro",
           im,
           global_step=self.current_epoch,
       )
 
       # free memory
-      self.multiclass_prc_macro.reset()
-      plt.close(fig_prc_macro)
+      self.multiclass_prc_micro.reset()
+      plt.close(fig_prc_micro)
