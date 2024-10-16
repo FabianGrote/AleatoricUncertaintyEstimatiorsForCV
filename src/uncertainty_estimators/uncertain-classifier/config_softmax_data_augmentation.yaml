@@ -2,7 +2,7 @@ accelerator:            gpu     # cpu or gpu
 devices:                1       # Number of GPU nodes for distributed training.
 num_nodes:              1       # Number of devices to train on (int), which devices to train on (list or str), or "auto".
 
-max_epochs:             2000 # 1000     # Stop training once this number of epochs is reached.
+max_epochs:             1000 # 1000     # Stop training once this number of epochs is reached.
 freeze_encoder_params:  False  # If encoder parameters should be freezed or not.
 
 dataset_name:           ImageNet   # Dataset to use. Can be: ImageNet, Imagenette, MNIST, GTSRB, ...
