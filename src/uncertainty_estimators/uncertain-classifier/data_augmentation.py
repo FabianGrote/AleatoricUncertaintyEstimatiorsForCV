@@ -9,22 +9,15 @@ class DataAugmentation(object):
         "Test-time Data Augmentation for Estimation of Heteroscedastic 
         Aleatoric Uncertainty in Deep Neural Networks """
 
-    def __init__(self, augment_data, num_data_augmentations, val):
+    def __init__(self, augment_data, num_data_augmentations, rotation_and_flip, val):
         self.augment_data = augment_data
         self.num_data_augmentations = num_data_augmentations
+        self.rotation_and_flip = rotation_and_flip
         self.val = val
-
+    
     def __call__(self, sample):
         if self.augment_data:
             augmented_sample = self.data_augmentation(sample)
-            # inputs = torch.cond(
-            #     torch.squeeze(torch.greater_equal(torch.random_uniform(shape=[1], minval=0., maxval=1.0, dtype=torch.float32),
-            #                             torch.constant(value=0.5, dtype=torch.float32)
-            #                             )
-            #         ),
-            #     true_fn=lambda: self.data_augmentation(inputs),
-            #     false_fn=lambda: self.do_nothing(inputs)
-            # )
             return augmented_sample
         else:
             return sample
@@ -80,29 +73,30 @@ class DataAugmentation(object):
             )(image)
 
             # make sure that pixel values are in [0., 1.]
-            #inputs = torch.minimum(inputs, 1.0)
-            #inputs = torch.maximum(inputs, 0.0)
-
-            # PART 2: Physical transformations on images: Flip LR, Flip UD, Rotate
-
-            # randomly mirror images horizontally
-            # image = RandomHorizontalFlip(p=0.5)(image)
-
-            # # randomly mirror images vertically
-            # image = RandomVerticalFlip(p=0.5)(image)
-
-            # random translations
-            #inputs = tf.contrib.image.translate(inputs,
-            #                                    translations=tf.random_uniform(shape=[tf.shape(inputs)[0], 2],
-            #                                                                   minval=-50, maxval=50, dtype=tf.float32
-            #                                                                   ),
-            #                                    interpolation='NEAREST',
-            #                                    name=None
-            #                                    )
-
-            # random rotations
-            # image = RandomRotation(degrees=(0., 360.), interpolation=InterpolationMode.NEAREST)(image)
+            inputs = torch.minimum(inputs, 1.0)
+            inputs = torch.maximum(inputs, 0.0)
             
+            if self.rotation_and_flip:
+                # PART 2: Physical transformations on images: Flip LR, Flip UD, Rotate
+
+                # randomly mirror images horizontally
+                image = RandomHorizontalFlip(p=0.5)(image)
+
+                # randomly mirror images vertically
+                image = RandomVerticalFlip(p=0.5)(image)
+
+                # random translations
+                # inputs = tf.contrib.image.translate(inputs,
+                #                                    translations=tf.random_uniform(shape=[tf.shape(inputs)[0], 2],
+                #                                                                   minval=-50, maxval=50, dtype=tf.float32
+                #                                                                   ),
+                #                                    interpolation='NEAREST',
+                #                                    name=None
+                #                                    )
+
+                # random rotations
+                image = RandomRotation(degrees=(0., 360.), interpolation=InterpolationMode.NEAREST)(image)
+                
             image = image.squeeze(dim=0)
             output_list.append(image)
         

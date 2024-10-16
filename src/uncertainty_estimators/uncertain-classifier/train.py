@@ -41,7 +41,13 @@ dataset_name = config["dataset_name"]
 print("Training on dataset: ", dataset_name)
 freeze_encoder_params = config["freeze_encoder_params"]
 
-train_dataset, val_dataset, class_labels, image_size = get_dataset(dataset_name=dataset_name, augment_data=config["augment_data"], num_data_augmentations=config["num_data_augmentations"])
+train_dataset, val_dataset, class_labels, image_size = get_dataset(
+   dataset_root_path = config["dataset_root_path"],
+   dataset_name=dataset_name, 
+   augment_data=config["augment_data"], 
+   num_data_augmentations=config["num_data_augmentations"],
+   rotation_and_flip = config["rotation_and_flip"]
+)
 
 train_loader = torch.utils.data.DataLoader(
   train_dataset, batch_size=config["train_batch_size"], shuffle=True, num_workers=8 # sampler=DistributedSampler(train_dataset)
@@ -81,7 +87,10 @@ criterion_to_use = config["criterion_to_use"] # "kendall_and_gal" or "kyles_vers
 
 time = time.strftime("%Y%m%d_%H-%M")
 # default logger used by trainer (if tensorboard is installed)
-log_folder = dataset_name + "_" + criterion_to_use + "_freeze_encoder-" + str(freeze_encoder_params) + "_augmentation_data-" + str(config["augment_data"]) + "_" + time
+log_folder = (
+  dataset_name + "_" + criterion_to_use + "_freeze_encoder-" + str(freeze_encoder_params) 
+  + "_augmentation_data-" + str(config["augment_data"]) + "_rotation_and_flip-" + str(config["rotation_and_flip"]) + "_" + time
+)
 logger = TensorBoardLogger(
   save_dir=os.getcwd(),
   name="lightning_logs",
