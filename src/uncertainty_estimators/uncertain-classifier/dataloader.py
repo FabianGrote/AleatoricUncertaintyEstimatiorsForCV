@@ -31,18 +31,18 @@ def get_dataset(dataset_root_path, dataset_name, augment_data, num_data_augmenta
 
     elif dataset_name == "Imagenette":
         train_dataset = datasets.Imagenette(
-            root = dataset_root_path + "/imagenette2",
+            root = dataset_root_path +  "/Imagenette",
             split = "train",
             transform = transforms.Compose([
                 transforms.Resize(256),
-                transforms.CenterCrop(224),
+                transforms.CenterCrop(224), 
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                 DataAugmentation(augment_data, num_data_augmentations, rotation_and_flip, val=False)
             ])
             )
         val_dataset = datasets.Imagenette(
-            root = dataset_root_path + "/imagenette2",
+            root = dataset_root_path +  "/Imagenette",
             split = "val",
             transform = transforms.Compose([
                 transforms.Resize(256),

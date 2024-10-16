@@ -73,8 +73,8 @@ class DataAugmentation(object):
             )(image)
 
             # make sure that pixel values are in [0., 1.]
-            inputs = torch.minimum(inputs, 1.0)
-            inputs = torch.maximum(inputs, 0.0)
+            # inputs = torch.minimum(inputs, 1.0)
+            # inputs = torch.maximum(inputs, 0.0)
             
             if self.rotation_and_flip:
                 # PART 2: Physical transformations on images: Flip LR, Flip UD, Rotate
