@@ -4,7 +4,8 @@ import torch.nn.functional as F
 import lightning as L
 from torch.optim.lr_scheduler import ExponentialLR
 
-from torchmetrics.classification import MulticlassAccuracy, MulticlassCalibrationError, MulticlassConfusionMatrix, MulticlassROC, MulticlassAUROC
+from torchmetrics.classification import MulticlassAccuracy, MulticlassCalibrationError, MulticlassConfusionMatrix
+from torchmetrics.classification import MulticlassROC, MulticlassAUROC, MulticlassPrecisionRecallCurve
 from torchmetrics import MeanSquaredError
 # from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -39,6 +40,8 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
     self.mean_squared_error = MeanSquaredError()
     self.multiclass_roc = MulticlassROC(num_classes=self.num_classes)
     self.multiclass_auroc = MulticlassAUROC(num_classes=self.num_classes)
+    self.multiclass_prc = MulticlassPrecisionRecallCurve(num_classes=self.num_classes, average=None)
+    self.multiclass_prc_macro = MulticlassPrecisionRecallCurve(num_classes=self.num_classes, average="macro")
     self.multiclass_confusion_matrix = MulticlassConfusionMatrix(num_classes=self.num_classes)
     self.log_confusion_matrix = log_confusion_matrix
 
@@ -242,3 +245,41 @@ class AleatoricUncertaintyEstimator(L.LightningModule):
       # free memory
       self.multiclass_roc.reset()
       plt.close(fig_roc)
+
+
+
+      self.multiclass_prc.update(preds=all_logits, target=all_targets)
+      fig_prc, ax_prc = self.multiclass_prc.plot(score=True) #, labels=self.class_labels.keys())
+      
+      buf = io.BytesIO()
+      fig_prc.savefig(buf, format="png", bbox_inches="tight")
+      buf.seek(0)
+      im = transforms.ToTensor()(Image.open(buf))
+
+      self.logger.experiment.add_image(
+          prefix + "_precision_reall_curve",
+          im,
+          global_step=self.current_epoch,
+      )
+
+      # free memory
+      self.multiclass_prc.reset()
+      plt.close(fig_prc)
+
+      self.multiclass_prc_macro.update(preds=all_logits, target=all_targets)
+      fig_prc_macro, ax_prc_macro = self.multiclass_prc_macro.plot(score=False) #, labels=self.class_labels.keys())
+      
+      buf = io.BytesIO()
+      fig_prc_macro.savefig(buf, format="png", bbox_inches="tight")
+      buf.seek(0)
+      im = transforms.ToTensor()(Image.open(buf))
+
+      self.logger.experiment.add_image(
+          prefix + "_precision_reall_curve_macro",
+          im,
+          global_step=self.current_epoch,
+      )
+
+      # free memory
+      self.multiclass_prc_macro.reset()
+      plt.close(fig_prc_macro)

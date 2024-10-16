@@ -86,10 +86,10 @@ class DataAugmentation(object):
             # PART 2: Physical transformations on images: Flip LR, Flip UD, Rotate
 
             # randomly mirror images horizontally
-            image = RandomHorizontalFlip(p=0.5)(image)
+            # image = RandomHorizontalFlip(p=0.5)(image)
 
-            # randomly mirror images vertically
-            image = RandomVerticalFlip(p=0.5)(image)
+            # # randomly mirror images vertically
+            # image = RandomVerticalFlip(p=0.5)(image)
 
             # random translations
             #inputs = tf.contrib.image.translate(inputs,
@@ -101,7 +101,7 @@ class DataAugmentation(object):
             #                                    )
 
             # random rotations
-            image = RandomRotation(degrees=(0., 360.), interpolation=InterpolationMode.NEAREST)(image)
+            # image = RandomRotation(degrees=(0., 360.), interpolation=InterpolationMode.NEAREST)(image)
             
             image = image.squeeze(dim=0)
             output_list.append(image)
