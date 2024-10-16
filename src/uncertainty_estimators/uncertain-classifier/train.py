@@ -18,22 +18,14 @@ import os
 print("Working dir:", os.getcwd())
 
 # local conda env: conda activate fabis_uncertainty_env
-# local execution: python3 train.py --accelerator='gpu' --devices=1 --num_nodes=1 --max_epochs=200 --dataset="MNIST" --freeze_encoder_params=True --criterion_to_use="softmax_only"
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--accelerator", default="cpu", help="cpu or gpu", type=str)
-# parser.add_argument("--devices", default=1, help="Number of GPU nodes for distributed training.", type=int)
-# parser.add_argument("--num_nodes", default=1, help="Number of GPU nodes for distributed training.", type=int)
-# parser.add_argument("--max_epochs", default=100, help="Stop training once this number of epochs is reached.", type=int)
-# parser.add_argument("--dataset", default="Imagenette", help="Dataset to use. Can be: Imagenet, Imagenette, MNIST, GTSRB, ...", type=str)
-# parser.add_argument("--freeze_encoder_params", default=True, help="If encoder parameters should be freezed or not.", type=bool)
-# parser.add_argument("--criterion_to_use", default="softmax_only", help="Criterion to use. Can be 'kendall_and_gal', 'kyles_version' or 'softmax_only'", type=str)
-# parser.add_argument("--data_augmentation", default="False", help="Set if test time data augmentation should be performed. Can be true or false.", type=bool)
-# args = parser.parse_args()
+# local execution: python3 train.py --config_name=
 
-# dataset_name = args.dataset
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_name", default="False", help="Which config to use for loading parameters.", type=str)
+args = parser.parse_args()
 
 my_path = Path(__file__).resolve()
-config_path = my_path.parent / 'config.yaml'
+config_path = my_path.parent / (args.config_name + '.yaml')
 with open(config_path, 'r') as file:
   config = yaml.safe_load(file)
 
