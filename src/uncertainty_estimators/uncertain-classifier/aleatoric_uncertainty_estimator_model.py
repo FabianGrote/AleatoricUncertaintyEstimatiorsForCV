@@ -43,7 +43,7 @@ class Net(nn.Module):
     if encoder == 'resnet50':
       base_model = torch.nn.Sequential(*(list(
         resnet50(
-          weights = "ResNet50_Weights.IMAGENET1K_V1"     
+          # weights = "ResNet50_Weights.IMAGENET1K_V1"     
         ).children())[:-1]),
         nn.Flatten(start_dim=1, end_dim=-1)
       )
